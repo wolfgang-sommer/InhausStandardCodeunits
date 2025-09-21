@@ -510,7 +510,7 @@ codeunit 50167 INHReqWkshMakeOrder
         AddOnIntegrMgt: Codeunit AddOnIntegrManagement;
         DimensionSetIDArr: array[10] of Integer;
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_ItemMgt: Codeunit ItemMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
         lo_co_ShelfNo: Code[20];
         lo_bo_MakeNewOrder: Boolean;
     begin

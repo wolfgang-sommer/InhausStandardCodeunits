@@ -324,11 +324,11 @@ codeunit 50138 INHSalesQuoteToOrder
         lo_re_ItemSubstitution: Record "Item Substitution";
         lo_re_SalesLine2: Record "Sales Line";
         lo_cu_ICMgt: Codeunit ICMgt;
-        lo_cu_ItemMgt: Codeunit ItemMgt;
-        lo_cu_CalcMgt: Codeunit CalcMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
+        lo_cu_CalcMgt: Codeunit INHCalcMgt;
         lo_cu_SalesLineMgt: Codeunit SalesLineMgt;
         lo_cu_SalesMgt: Codeunit SalesMgt;
-        lo_cu_VariantMgt: Codeunit VariantMgt;
+        lo_cu_VariantMgt: Codeunit INHVariantMgt;
         lo_de_Available: Decimal;
         lo_de_Dummy: Decimal;
         lo_bo_CopyLine: Boolean;

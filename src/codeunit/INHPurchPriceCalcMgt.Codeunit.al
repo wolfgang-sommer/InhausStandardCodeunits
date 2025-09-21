@@ -261,7 +261,7 @@ codeunit 50129 INHPurchPriceCalcMgt
         BestPurchPriceFound: Boolean;
         "+++LO_VAR_INHAUS+++": Boolean;
         lo_cu_GeneralMgtIH: Codeunit "GeneralMgt IH";
-        lo_cu_ItemMgt: Codeunit ItemMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
         lo_co_ToCurr: Code[10];
     begin
         lo_co_ToCurr := PurchPrice."Currency Code";   //C01°
@@ -994,7 +994,7 @@ codeunit 50129 INHPurchPriceCalcMgt
     local procedure fnk_OnAfterFindPurchLinePrice(var PurchaseLine: Record "Purchase Line"; var PurchaseHeader: Record "Purchase Header"; var PurchasePrice: Record "Purchase Price"; CalledByFieldNo: Integer)
     var
         lo_cu_GeneralMgtIH: Codeunit "GeneralMgt IH";
-        lo_cu_ItemMgt: Codeunit ItemMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
         lo_cu_PurchMgt: Codeunit PurchaseMgt;
         lo_de_UnitCost: Decimal;
     begin
@@ -1061,7 +1061,7 @@ codeunit 50129 INHPurchPriceCalcMgt
     [EventSubscriber(ObjectType::Codeunit, 7010, 'OnAfterFindReqLinePrice', '', false, false)]
     local procedure fnk_OnAfterFindReqLinePrice(var ReqLine: Record "Requisition Line"; var TempPurchasePrice: Record "Purchase Price" temporary; CalledByFieldNo: Integer)
     var
-        lo_cu_ItemMgt: Codeunit ItemMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
         lo_cu_PurchMgt: Codeunit PurchaseMgt;
         lo_de_UnitCost: Decimal;
     begin

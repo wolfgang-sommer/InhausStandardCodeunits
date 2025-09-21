@@ -179,7 +179,7 @@ codeunit 50155 INHWhseJnlRegisterLine
         Sign: Integer;
         IsHandled: Boolean;
         "+++VAR_Inhaus+++": Integer;
-        lo_cu_ItemMgt: Codeunit ItemMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
     begin
         with WhseEntry do begin
             FromBinContent.Get("Location Code", "Bin Code", "Item No.", "Variant Code", "Unit of Measure Code");

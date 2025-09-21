@@ -40,7 +40,7 @@ codeunit 50154 INHWhseCreateSourceDocument
         ATOWhseShptLineQty: Decimal;
         ATOWhseShptLineQtyBase: Decimal;
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_ItemMgt: Codeunit ItemMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
     begin
         SalesLine.CalcFields("Whse. Outstanding Qty.", "ATO Whse. Outstanding Qty.",
           "Whse. Outstanding Qty. (Base)", "ATO Whse. Outstd. Qty. (Base)");
@@ -380,7 +380,7 @@ codeunit 50154 INHWhseCreateSourceDocument
     var
         Item: Record Item;
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_ItemMgt: Codeunit ItemMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
     begin
         with WhseShptLine do begin
             Item."No." := "Item No.";
@@ -415,7 +415,7 @@ codeunit 50154 INHWhseCreateSourceDocument
     var
         Item: Record Item;
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_ItemMgt: Codeunit ItemMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
         lo_cu_LogisticsMgt: Codeunit INHLogisticsMgt;
     begin
         with WhseReceiptLine do begin
@@ -770,7 +770,7 @@ codeunit 50154 INHWhseCreateSourceDocument
         lo_re_ReserveEntryView: Record VIEW_ReservationEntry;
         lo_re_ReserveEntry: Record "Reservation Entry";
         lo_re_ReserveEntryForeign: Record "Reservation Entry";
-        lo_cu_ItemMgt: Codeunit ItemMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
         lo_cu_LogisticsMgt: Codeunit INHLogisticsMgt;
         lo_in_NextLineNo: Integer;
         WhseMgt: Codeunit "Whse. Management";
@@ -926,7 +926,7 @@ codeunit 50154 INHWhseCreateSourceDocument
     local procedure ICNeu_CreateShptLine(var WhseShptLine: Record "Warehouse Shipment Line") Created: Boolean
     var
         Item: Record Item;
-        Artikelverwaltung: Codeunit ItemMgt;
+        Artikelverwaltung: Codeunit INHItemMgt;
     begin
         //A19°
         with WhseShptLine do begin

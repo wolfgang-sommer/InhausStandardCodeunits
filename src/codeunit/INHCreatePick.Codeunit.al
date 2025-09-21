@@ -3115,7 +3115,7 @@ codeunit 50176 INHCreatePick
         QtyToPickBase: Decimal;
         QtyToPick: Decimal;
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_ItemMgt: Codeunit ItemMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
     begin
         with AsmLine do begin
             TestField("Qty. per Unit of Measure");

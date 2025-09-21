@@ -2010,7 +2010,7 @@ codeunit 50137 INHSalesPriceCalcMgt
     local procedure fnk_OnAfterFindSalesLinePrice(SalesHeader: Record "Sales Header"; var SalesLine: Record "Sales Line"; CalledByFieldNo: Integer)
     var
         lo_re_Cust: Record Customer;
-        lo_cu_ItemMgt: Codeunit ItemMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
         lo_cu_SalesMgt: Codeunit SalesMgt;
         lo_cu_PreisfindungKundeArtikel: Codeunit "Preisfindung Kunde-Artikel";
         lo_de_PriceFactor: Decimal;
