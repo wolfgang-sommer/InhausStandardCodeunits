@@ -1,0 +1,33 @@
+{
+  "id": "f3fad486-6e8a-43ae-a047-2fcf8cb4831f",
+  "name": "app",
+  "publisher": "Default Publisher",
+  "version": "1.0.0.0",
+  "EULA": "http://inhausgruppe.com",
+  "logo": "src/logo.png",
+  "help": "http://inhausgruppe.com",
+  "brief": "brief",
+  "privacyStatement": "http://inhausgruppe.com",
+  "contextSensitiveHelpUrl": "http://inhausgruppe.com",
+  "url": "http://inhausgruppe.com",
+  "dependencies": [],
+  "screenshots": [],
+  "platform": "26.0.0.0",
+  "application": "26.0.0.0",
+  "idRanges": [
+    {
+      "from": 50100,
+      "to": 50200
+    }
+  ],
+  "resourceExposurePolicy": {
+    "allowDebugging": true,
+    "allowDownloadingSource": true,
+    "includeSourceInSymbolFile": true
+  },
+  "runtime": "16.0",
+  "features": [
+    "NoImplicitWith",
+    "TranslationFile"
+  ]
+}
