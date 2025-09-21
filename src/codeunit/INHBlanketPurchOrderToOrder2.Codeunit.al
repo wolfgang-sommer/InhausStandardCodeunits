@@ -1,4 +1,4 @@
-codeunit 50169 INHBlanketPurchOrderToOrder
+codeunit 50179 INHBlanketPurchOrderToOrder2
 {
     // +---------------------------------------------+
     // +                                             +
@@ -26,26 +26,26 @@ codeunit 50169 INHBlanketPurchOrderToOrder
     begin
         OnBeforeRun(Rec);
 
-        TestField("Document Type", "Document Type"::"Blanket Order");
-        ShouldRedistributeInvoiceAmount := PurchCalcDiscByType.ShouldRedistributeInvoiceDiscountAmount(Rec);
+        // TestField("Document Type", "Document Type"::"Blanket Order");
+        // ShouldRedistributeInvoiceAmount := PurchCalcDiscByType.ShouldRedistributeInvoiceDiscountAmount(Rec);
 
-        Vend.Get("Buy-from Vendor No.");
-        Vend.CheckBlockedVendOnDocs(Vend, false);
+        // Vend.Get("Buy-from Vendor No.");
+        // Vend.CheckBlockedVendOnDocs(Vend, false);
 
-        ValidatePurchaserOnPurchHeader(Rec, true, false);
+        // ValidatePurchaserOnPurchHeader(Rec, true, false);
 
-        CheckForBlockedLines;
+        // CheckForBlockedLines;
 
-        if QtyToReceiveIsZero then
-            Error(Text002);
+        // if QtyToReceiveIsZero then
+        //     Error(Text002);
 
         PurchSetup.Get;
 
         CreatePurchHeader(Rec, Vend."Prepayment %");
 
         PurchBlanketOrderLine.Reset;
-        PurchBlanketOrderLine.SetRange("Document Type", "Document Type");
-        PurchBlanketOrderLine.SetRange("Document No.", "No.");
+        // PurchBlanketOrderLine.SetRange("Document Type", "Document Type");
+        // PurchBlanketOrderLine.SetRange("Document No.", "No.");
         if PurchBlanketOrderLine.FindSet then
             repeat
                 if (PurchBlanketOrderLine.Type = PurchBlanketOrderLine.Type::" ") or
@@ -90,7 +90,7 @@ codeunit 50169 INHBlanketPurchOrderToOrder
                     ResetQuantityFields(PurchOrderLine);
                     PurchOrderLine."Document Type" := PurchOrderHeader."Document Type";
                     PurchOrderLine."Document No." := PurchOrderHeader."No.";
-                    PurchOrderLine."Blanket Order No." := "No.";
+                    // PurchOrderLine."Blanket Order No." := "No.";
                     PurchOrderLine."Blanket Order Line No." := PurchBlanketOrderLine."Line No.";
 
                     if (PurchOrderLine."No." <> '') and (PurchOrderLine.Type <> 0) then begin
@@ -140,11 +140,11 @@ codeunit 50169 INHBlanketPurchOrderToOrder
             PurchOrderHeader.Modify;
         end;
 
-        if PurchSetup."Copy Comments Blanket to Order" then begin
-            PurchCommentLine.CopyComments(
-              PurchCommentLine."Document Type"::"Blanket Order", PurchOrderHeader."Document Type", "No.", PurchOrderHeader."No.");
-            RecordLinkManagement.CopyLinks(Rec, PurchOrderHeader);
-        end;
+        // if PurchSetup."Copy Comments Blanket to Order" then begin
+        //     PurchCommentLine.CopyComments(
+        //       PurchCommentLine."Document Type"::"Blanket Order", PurchOrderHeader."Document Type", "No.", PurchOrderHeader."No.");
+        //     RecordLinkManagement.CopyLinks(Rec, PurchOrderHeader);
+        // end;
 
         if not (ShouldRedistributeInvoiceAmount or PurchSetup."Calc. Inv. Discount") then
             PurchCalcDiscByType.ResetRecalculateInvoiceDisc(PurchOrderHeader);
@@ -195,7 +195,7 @@ codeunit 50169 INHBlanketPurchOrderToOrder
 
             PurchOrderHeader."Prepayment %" := PrepmtPercent;
             OnBeforePurchOrderHeaderModify(PurchOrderHeader, PurchHeader);
-            PurchOrderHeader.Lieferinfo := PurchOrderHeader.Lieferinfo::Offen;   //Axx°
+            // PurchOrderHeader.Lieferinfo := PurchOrderHeader.Lieferinfo::Offen;   //Axx°
             PurchOrderHeader.Modify;
         end;
     end;

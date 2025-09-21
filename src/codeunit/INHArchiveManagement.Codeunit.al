@@ -123,7 +123,7 @@ codeunit 50168 INHArchiveManagement
     var
         ConfirmManagement: Codeunit "Confirm Management";
     begin
-        if ConfirmManagement.ConfirmProcess(
+        if ConfirmManagement.GetResponse
              StrSubstNo(Text007, SalesHeader."Document Type", SalesHeader."No."), true)
         then begin
             StoreSalesDocument(SalesHeader, false);
@@ -135,7 +135,7 @@ codeunit 50168 INHArchiveManagement
     var
         ConfirmManagement: Codeunit "Confirm Management";
     begin
-        if ConfirmManagement.ConfirmProcess(
+        if ConfirmManagement.GetResponse
              StrSubstNo(Text007, PurchHeader."Document Type", PurchHeader."No."), true)
         then begin
             StorePurchDocument(PurchHeader, false);
@@ -149,7 +149,7 @@ codeunit 50168 INHArchiveManagement
         SalesHeaderArchive: Record "Sales Header Archive";
         SalesLineArchive: Record "Sales Line Archive";
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_SalesMgt: Codeunit SalesMgt;
+        lo_cu_SalesMgt: Codeunit INHSalesMgt;
     begin
         SalesHeaderArchive.Init;
         SalesHeaderArchive.TransferFields(SalesHeader);
@@ -182,15 +182,15 @@ codeunit 50168 INHArchiveManagement
                     OnBeforeSalesLineArchiveInsert(SalesLineArchive, SalesLine);
                     Insert;
                 end;
-                if SalesLine."Deferral Code" <> '' then
-                    StoreDeferrals(DeferralUtilities.GetSalesDeferralDocType, SalesLine."Document Type",
-                      SalesLine."Document No.", SalesLine."Line No.", SalesHeader."Doc. No. Occurrence", SalesHeaderArchive."Version No.");
+                // if SalesLine."Deferral Code" <> '' then
+                //     StoreDeferrals(DeferralUtilities.GetSalesDeferralDocType, SalesLine."Document Type",
+                //       SalesLine."Document No.", SalesLine."Line No.", SalesHeader."Doc. No. Occurrence", SalesHeaderArchive."Version No.");
 
                 OnAfterStoreSalesLineArchive(SalesHeader, SalesLine, SalesHeaderArchive, SalesLineArchive);
             until SalesLine.Next = 0;
 
         OnAfterStoreSalesDocument(SalesHeader, SalesHeaderArchive);
-        lo_cu_SalesMgt.fnk_Cu5063_OnAfterStoreSalesDocument(SalesHeader, SalesHeaderArchive);   //C27°
+        // lo_cu_SalesMgt.fnk_Cu5063_OnAfterStoreSalesDocument(SalesHeader, SalesHeaderArchive);   //C27°
     end;
 
     procedure StorePurchDocument(var PurchHeader: Record "Purchase Header"; InteractionExist: Boolean)
@@ -199,7 +199,7 @@ codeunit 50168 INHArchiveManagement
         PurchHeaderArchive: Record "Purchase Header Archive";
         PurchLineArchive: Record "Purchase Line Archive";
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_PurchMgt: Codeunit PurchaseMgt;
+        lo_cu_PurchMgt: Codeunit INHPurchaseMgt;
     begin
         PurchHeaderArchive.Init;
         PurchHeaderArchive.TransferFields(PurchHeader);
@@ -231,15 +231,15 @@ codeunit 50168 INHArchiveManagement
                     OnBeforePurchLineArchiveInsert(PurchLineArchive, PurchLine);
                     Insert;
                 end;
-                if PurchLine."Deferral Code" <> '' then
-                    StoreDeferrals(DeferralUtilities.GetPurchDeferralDocType, PurchLine."Document Type",
-                      PurchLine."Document No.", PurchLine."Line No.", PurchHeader."Doc. No. Occurrence", PurchHeaderArchive."Version No.");
+                // if PurchLine."Deferral Code" <> '' then
+                //     StoreDeferrals(DeferralUtilities.GetPurchDeferralDocType, PurchLine."Document Type",
+                //       PurchLine."Document No.", PurchLine."Line No.", PurchHeader."Doc. No. Occurrence", PurchHeaderArchive."Version No.");
 
                 OnAfterStorePurchLineArchive(PurchHeader, PurchLine, PurchHeaderArchive, PurchLineArchive);
             until PurchLine.Next = 0;
 
         OnAfterStorePurchDocument(PurchHeader, PurchHeaderArchive);
-        lo_cu_PurchMgt.fnk_Cu5063_OnAfterStorePurchDocument(PurchHeader, PurchHeaderArchive);   //C27°
+        // lo_cu_PurchMgt.fnk_Cu5063_OnAfterStorePurchDocument(PurchHeader, PurchHeaderArchive);   //C27°
     end;
 
     procedure RestoreSalesDocument(var SalesHeaderArchive: Record "Sales Header Archive")
@@ -258,15 +258,15 @@ codeunit 50168 INHArchiveManagement
         "+++LO_VAR_INHAUS+++": Boolean;
         lo_re_Cust: Record Customer;
         lo_re_Item: Record Item;
-        lo_cu_OverallVariableMgt: Codeunit OverallVariableMgt;
-        lo_cu_SalesMgt: Codeunit SalesMgt;
+        lo_cu_OverallVariableMgt: Codeunit INHOverallVariableMgt;
+        lo_cu_SalesMgt: Codeunit INHSalesMgt;
         lo_bo_SkipValidation: Boolean;
     begin
         OnBeforeRestoreSalesDocument(SalesHeaderArchive, IsHandled);
         if IsHandled then
             exit;
 
-        lo_cu_SalesMgt.fnk_Cu5063_OnBeforeRestoreSalesDocument(SalesHeaderArchive);   //C27°
+        // lo_cu_SalesMgt.OnBeforeRestoreSalesDocument(SalesHeaderArchive);   //C27°
         if not SalesHeader.Get(SalesHeaderArchive."Document Type", SalesHeaderArchive."No.") then
             Error(Text009, SalesHeaderArchive."Document Type", SalesHeaderArchive."No.");
 
@@ -305,13 +305,13 @@ codeunit 50168 INHArchiveManagement
 
         RestoreDocument := false;
         if ConfirmRequired then begin
-            if ConfirmManagement.ConfirmProcess(
+            if ConfirmManagement.GetResponse(
                  StrSubstNo(
                    Text006, ReservEntry.TableCaption, ItemChargeAssgntSales.TableCaption, Text008), true)
             then
                 RestoreDocument := true;
         end else
-            if ConfirmManagement.ConfirmProcess(
+            if ConfirmManagement.GetResponse(
                  StrSubstNo(
                    Text002, SalesHeaderArchive."Document Type",
                    SalesHeaderArchive."No.", SalesHeaderArchive."Version No."), true)
@@ -334,7 +334,6 @@ codeunit 50168 INHArchiveManagement
             SalesHeader."Document Type" := SalesHeaderArchive."Document Type";
             SalesHeader."No." := SalesHeaderArchive."No.";
             OnBeforeSalesHeaderInsert(SalesHeader, SalesHeaderArchive);
-            SalesHeader.IC_Typ := SalesHeaderArchive.IC_Typ;   //B40°.3
             SalesHeader.Insert(true);
             SalesHeader.TransferFields(SalesHeaderArchive);
             SalesHeader.Status := SalesHeader.Status::Open;
@@ -371,29 +370,29 @@ codeunit 50168 INHArchiveManagement
             if SalesHeaderArchive."Ship-to Code" <> '' then begin
                 SalesHeader.Validate("Ship-to Code", SalesHeaderArchive."Ship-to Code");
             end;
-            SalesHeader.Privatkunde := SalesHeaderArchive.Privatkunde;
-            SalesHeader.Architekt := SalesHeaderArchive.Architekt;
-            SalesHeader.GU := SalesHeaderArchive.GU;
-            SalesHeader."Kom." := SalesHeaderArchive."Kom.";
-            SalesHeader.IC_Typ := SalesHeaderArchive.IC_Typ;
-            SalesHeader.IC_Mandant := SalesHeaderArchive.IC_Mandant;
-            SalesHeader."Your Reference" := SalesHeaderArchive."Your Reference";
-            SalesHeader."Kopfrabatt H" := SalesHeaderArchive."Kopfrabatt H";
-            SalesHeader."Kopfrabatt I" := SalesHeaderArchive."Kopfrabatt I";
-            SalesHeader."Kopfrabatt E" := SalesHeaderArchive."Kopfrabatt E";
-            SalesHeader."Kopfrabatt W" := SalesHeaderArchive."Kopfrabatt W";
-            SalesHeader."Kopfrabatt G" := SalesHeaderArchive."Kopfrabatt G";
-            SalesHeader."Kopfrabatt T" := SalesHeaderArchive."Kopfrabatt T";
-            SalesHeader.Planer := SalesHeaderArchive.Planer;
-            SalesHeader.Investor := SalesHeaderArchive.Investor;
-            SalesHeader."PrivatCustHeaderDisc H" := SalesHeaderArchive."PrivatCustHeaderDisc H";
-            SalesHeader."PrivatCustHeaderDisc I" := SalesHeaderArchive."PrivatCustHeaderDisc I";
-            SalesHeader."PrivatCustHeaderDisc E" := SalesHeaderArchive."PrivatCustHeaderDisc E";
-            SalesHeader."PrivatCustHeaderDisc W" := SalesHeaderArchive."PrivatCustHeaderDisc W";
-            SalesHeader."PrivatCustHeaderDisc G" := SalesHeaderArchive."PrivatCustHeaderDisc G";
-            SalesHeader."PrivatCustHeaderDisc T" := SalesHeaderArchive."PrivatCustHeaderDisc T";
-            SalesHeader."Job No." := SalesHeaderArchive."Job No.";
-            SalesHeader."Kundenprojektnr." := SalesHeaderArchive."Kundenprojektnr.";
+            // SalesHeader.Privatkunde := SalesHeaderArchive.Privatkunde;
+            // SalesHeader.Architekt := SalesHeaderArchive.Architekt;
+            // SalesHeader.GU := SalesHeaderArchive.GU;
+            // SalesHeader."Kom." := SalesHeaderArchive."Kom.";
+            // SalesHeader.IC_Typ := SalesHeaderArchive.IC_Typ;
+            // SalesHeader.IC_Mandant := SalesHeaderArchive.IC_Mandant;
+            // SalesHeader."Your Reference" := SalesHeaderArchive."Your Reference";
+            // SalesHeader."Kopfrabatt H" := SalesHeaderArchive."Kopfrabatt H";
+            // SalesHeader."Kopfrabatt I" := SalesHeaderArchive."Kopfrabatt I";
+            // SalesHeader."Kopfrabatt E" := SalesHeaderArchive."Kopfrabatt E";
+            // SalesHeader."Kopfrabatt W" := SalesHeaderArchive."Kopfrabatt W";
+            // SalesHeader."Kopfrabatt G" := SalesHeaderArchive."Kopfrabatt G";
+            // SalesHeader."Kopfrabatt T" := SalesHeaderArchive."Kopfrabatt T";
+            // SalesHeader.Planer := SalesHeaderArchive.Planer;
+            // SalesHeader.Investor := SalesHeaderArchive.Investor;
+            // SalesHeader."PrivatCustHeaderDisc H" := SalesHeaderArchive."PrivatCustHeaderDisc H";
+            // SalesHeader."PrivatCustHeaderDisc I" := SalesHeaderArchive."PrivatCustHeaderDisc I";
+            // SalesHeader."PrivatCustHeaderDisc E" := SalesHeaderArchive."PrivatCustHeaderDisc E";
+            // SalesHeader."PrivatCustHeaderDisc W" := SalesHeaderArchive."PrivatCustHeaderDisc W";
+            // SalesHeader."PrivatCustHeaderDisc G" := SalesHeaderArchive."PrivatCustHeaderDisc G";
+            // SalesHeader."PrivatCustHeaderDisc T" := SalesHeaderArchive."PrivatCustHeaderDisc T";
+            // SalesHeader."Job No." := SalesHeaderArchive."Job No.";
+            // SalesHeader."Kundenprojektnr." := SalesHeaderArchive."Kundenprojektnr.";
             SalesHeader."Shortcut Dimension 1 Code" := SalesHeaderArchive."Shortcut Dimension 1 Code";
             SalesHeader."Shortcut Dimension 2 Code" := SalesHeaderArchive."Shortcut Dimension 2 Code";
             SalesHeader."Currency Code" := SalesHeaderArchive."Currency Code";
@@ -403,16 +402,12 @@ codeunit 50168 INHArchiveManagement
             SalesHeader."Transport Method" := SalesHeaderArchive."Transport Method";
             SalesHeader."Exit Point" := SalesHeaderArchive."Exit Point";
             SalesHeader.Area := SalesHeaderArchive.Area;
-            SalesHeader.Ersteller := SalesHeaderArchive.Ersteller;
-            SalesHeader.Angebotsart2 := SalesHeaderArchive.Angebotsart2;
-            //STOP  B40° ---------------------------------
-            //START A65° ---------------------------------
-            SalesHeader.Angebotsart := SalesHeaderArchive.Angebotsart;
-            SalesHeader."GU-Rabatt für Standardartikel" := SalesHeaderArchive."GU-Rabatt für Standardartikel";
-            SalesHeader."GU-Rabatt für Austauschartikel" := SalesHeaderArchive."GU-Rabatt für Austauschartikel";
-            SalesHeader."Zahlungscode GU" := SalesHeaderArchive."Zahlungscode GU";
-            //STOP  A65° ---------------------------------
-            //CLEAR(SalesHeader.Nettoprojekt);   //C73°
+            // SalesHeader.Ersteller := SalesHeaderArchive.Ersteller;
+            // SalesHeader.Angebotsart2 := SalesHeaderArchive.Angebotsart2;
+            // SalesHeader.Angebotsart := SalesHeaderArchive.Angebotsart;
+            // SalesHeader."GU-Rabatt für Standardartikel" := SalesHeaderArchive."GU-Rabatt für Standardartikel";
+            // SalesHeader."GU-Rabatt für Austauschartikel" := SalesHeaderArchive."GU-Rabatt für Austauschartikel";
+            // SalesHeader."Zahlungscode GU" := SalesHeaderArchive."Zahlungscode GU";
             Clear(SalesHeader."Release Bäderpark");   //C51°
 
             RecordLinkManagement.CopyLinks(SalesHeaderArchive, SalesHeader);
@@ -427,7 +422,7 @@ codeunit 50168 INHArchiveManagement
             Message(Text003, SalesHeader."Document Type", SalesHeader."No.");
         end;
 
-        lo_cu_SalesMgt.fnk_Cu5063_OnAfterRestoreSalesDocument(SalesHeaderArchive, SalesHeader);   //C27°
+        // lo_cu_SalesMgt.fnk_Cu5063_OnAfterRestoreSalesDocument(SalesHeaderArchive, SalesHeader);   //C27°
     end;
 
     local procedure RestoreSalesLines(var SalesHeaderArchive: Record "Sales Header Archive"; SalesHeader: Record "Sales Header")
@@ -435,7 +430,7 @@ codeunit 50168 INHArchiveManagement
         SalesLine: Record "Sales Line";
         SalesLineArchive: Record "Sales Line Archive";
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_SalesLineMgt: Codeunit SalesLineMgt;
+        lo_cu_SalesLineMgt: Codeunit INHSalesLineMgt;
     begin
         RestoreSalesLineComments(SalesHeaderArchive, SalesHeader);
 
@@ -451,7 +446,8 @@ codeunit 50168 INHArchiveManagement
                     //START B40°.8 ---------------------------------
                     // Bei Setkomponenten darf kein insert(true) gemacht werden, weil sonst kommt Fehlermeldung da
                     // das einfügen über den Set-Artikel gehandhabt wird
-                    if Artikeltyp in [Artikeltyp::Setkomponente] then begin
+                    if true then begin
+                        // if in [INHEnumItemType::Setkomponente] then begin
                         Insert(false);
                     end else
                         //STOP  B40°.8 ---------------------------------
@@ -482,16 +478,16 @@ codeunit 50168 INHArchiveManagement
                     "Shortcut Dimension 2 Code" := SalesLineArchive."Shortcut Dimension 2 Code";
                     "Dimension Set ID" := SalesLineArchive."Dimension Set ID";
                     "Deferral Code" := SalesLineArchive."Deferral Code";
-                    RestoreDeferrals(DeferralUtilities.GetSalesDeferralDocType,
-                      SalesLineArchive."Document Type",
-                      SalesLineArchive."Document No.",
-                      SalesLineArchive."Line No.",
-                      SalesHeaderArchive."Doc. No. Occurrence",
-                      SalesHeaderArchive."Version No.");
+                    // RestoreDeferrals(DeferralUtilities.GetSalesDeferralDocType,
+                    //   SalesLineArchive."Document Type",
+                    //   SalesLineArchive."Document No.",
+                    //   SalesLineArchive."Line No.",
+                    //   SalesHeaderArchive."Doc. No. Occurrence",
+                    //   SalesHeaderArchive."Version No.");
                     RecordLinkManagement.CopyLinks(SalesLineArchive, SalesLine);
                     SalesLine."Job Task No." := SalesLineArchive."Job Task No.";   //C02°
-                    lo_cu_SalesLineMgt.fnk_FillUnitCostSales(SalesLine, SalesLine);   //C01°
-                                                                                      //CLEAR(Nettoprojekt);   //C73°
+                                                                                   // lo_cu_SalesLineMgt.fnk_FillUnitCostSales(SalesLine, SalesLine);   //C01°
+                                                                                   //CLEAR(Nettoprojekt);   //C73°
                     OnAfterTransferFromArchToSalesLine(SalesLine, SalesLineArchive);
                     Modify(true);
                 end;
@@ -609,12 +605,9 @@ codeunit 50168 INHArchiveManagement
 
     procedure ArchSalesDocumentNoConfirm(var SalesHeader: Record "Sales Header")
     var
-        lo_cu_SalesMgt: Codeunit SalesMgt;
+        lo_cu_SalesMgt: Codeunit INHSalesMgt;
     begin
-        //START B40°.9 ---------------------------------
-        // StoreSalesDocument(SalesHeader,FALSE);
-        lo_cu_SalesMgt.FNK_RunSalesArchivingOnDemand(SalesHeader);
-        //STOP  B40°.9 ---------------------------------
+        lo_cu_SalesMgt.RunSalesArchivingOnDemand(SalesHeader);
     end;
 
     procedure ArchPurchDocumentNoConfirm(var PurchHeader: Record "Purchase Header")

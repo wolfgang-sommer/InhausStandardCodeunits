@@ -29,7 +29,7 @@ codeunit 50120 INHPostPurchDelete
         DocumentDeletionErr: Label 'You cannot delete posted purchase documents that are posted after %1. \\The date is defined by the Allow Document Deletion Before field in the Purchases & Payables Setup window.', Comment = '%1 - Posting Date';
         "+++VAR_INHAUS+++": Boolean;
         re_PurchCommentLine: Record "Purch. Comment Line";
-        cu_PurchaseMgt: Codeunit PurchaseMgt;
+        cu_PurchaseMgt: Codeunit INHPurchaseMgt;
         op_DocAction: Option " ",Post,Correction;
 
     procedure DeleteHeader(PurchHeader: Record "Purchase Header"; var PurchRcptHeader: Record "Purch. Rcpt. Header"; var PurchInvHeader: Record "Purch. Inv. Header"; var PurchCrMemoHdr: Record "Purch. Cr. Memo Hdr."; var ReturnShptHeader: Record "Return Shipment Header"; var PurchInvHeaderPrepmt: Record "Purch. Inv. Header"; var PurchCrMemoHdrPrepmt: Record "Purch. Cr. Memo Hdr.")
@@ -86,7 +86,7 @@ codeunit 50120 INHPostPurchDelete
                 PurchInvLine.Description := SourceCode.Description;
                 PurchInvLine.Insert;
                 //START Axx° ---------------------------------
-                cu_PurchaseMgt.fnk_CopyCommentLines(
+                cu_PurchaseMgt.CopyCommentLines(
                   "Document Type", re_PurchCommentLine."Document Type"::"Posted Invoice",
                   "No.", PurchInvHeader."No.");
                 //STOP  Axx° ---------------------------------

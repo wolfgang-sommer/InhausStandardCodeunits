@@ -5194,7 +5194,7 @@ codeunit 50134 INHSalesPost
                (Item."Reserved Qty. on Inventory" > "Reserved Qty. (Base)")
             then begin
                 InsertTempSKU("Location Code", "No.", "Variant Code");
-                if not ConfirmManagement.ConfirmProcess(
+                if not ConfirmManagement.GetResponse
                      StrSubstNo(
                        ReservationDisruptedQst, FieldCaption("No."), Item."No.", FieldCaption("Location Code"),
                        "Location Code", FieldCaption("Variant Code"), "Variant Code"), true)
@@ -5772,7 +5772,7 @@ codeunit 50134 INHSalesPost
                             SalesInvHeader.SendProfile(DocumentSendingProfile);
                         end;
                         if Ship and Invoice and not OfficeManagement.IsAvailable then
-                            if not ConfirmManagement.ConfirmProcess(DownloadShipmentAlsoQst, true) then
+                            if not ConfirmManagement.GetResponseDownloadShipmentAlsoQst, true) then
                                 exit;
                         if Ship then begin
                             SalesShipmentHeader.Get("Last Shipping No.");

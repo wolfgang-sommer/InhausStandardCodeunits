@@ -47,17 +47,13 @@ codeunit 50123 INHItemSubst
         OldSalesUOM: Code[10];
         Text001: Label 'An Item Substitution with the specified variant does not exist for Item No. ''%1''.';
         Text002: Label 'An Item Substitution does not exist for Item No. ''%1''';
-        "+++VAR_INHAUS+++": Boolean;
         re_xSalesLine: Record "Sales Line";
-        "+++TE_INHAUS+++": ;
         TextDiscItem: Label 'Auslaufartikel(6|gesperrt) mit zu wenig Lagerbestand kann nicht erfasst werden.';
 
-    [Scope('Internal')]
     procedure ItemSubstGet(var SalesLine: Record "Sales Line")
     var
         SalesLineReserve: Codeunit "Sales Line-Reserve";
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_ICMgt: Codeunit ICMgt;
         lo_de_Available: Decimal;
         lo_bo_DiscontinuedItem: Boolean;
     begin
@@ -77,14 +73,6 @@ codeunit 50123 INHItemSubst
         Item.SetFilter("Location Filter", TempSalesLine."Location Code");
         Item.SetFilter("Variant Filter", TempSalesLine."Variant Code");
         Item.SetRange("Date Filter", 0D, TempSalesLine."Shipment Date");
-        //START Axx° ---------------------------------
-        // Item.CALCFIELDS(Inventory);
-        // Item.CALCFIELDS("Qty. on Sales Order");
-        // Item.CALCFIELDS("Qty. on Service Order");
-        lo_cu_ICMgt.FNK_GetItemInventoryData(Item.GetFilter("Location Filter"), Item."No.", '', Item.Inventory, lo_de_Available,
-                                             Item."Qty. on Sales Order", Item."Qty. on Purch. Order", Item."Trans. Ord. Shipment (Qty.)",
-                                             Item."Trans. Ord. Receipt (Qty.)", Item."Qty. in Transit");
-        //STOP  Axx° ---------------------------------
         OldSalesUOM := Item."Sales Unit of Measure";
 
         ItemSubstitution.Reset;
@@ -94,17 +82,13 @@ codeunit 50123 INHItemSubst
         ItemSubstitution.SetRange("Location Filter", TempSalesLine."Location Code");
         if ItemSubstitution.Find('-') then begin
 
-            //START A96° ---------------------------------
-            //IF (Item."Item Type" = '6') OR (Item.Blocked) THEN BEGIN
             if Item.Blocked then begin
                 lo_bo_DiscontinuedItem := true;
-                if (lo_de_Available >= (SalesLine.Quantity - re_xSalesLine.Quantity)) then begin
+                if (lo_de_Available >= (SalesLine.Quantity - re_xSalesLine.Quantity)) then
                     exit;
-                end;
             end;
-            //STOP  A96° ---------------------------------
 
-            CalcCustPrice;
+            CalcCustPrice();
             TempItemSubstitution.Reset;
             TempItemSubstitution.SetRange("No.", TempSalesLine."No.");
             TempItemSubstitution.SetRange("Variant Code", TempSalesLine."Variant Code");
@@ -137,10 +121,10 @@ codeunit 50123 INHItemSubst
                 TempSalesLine.Validate(Quantity, SaveQty);
                 //Axx°.1:TempSalesLine.VALIDATE("Unit of Measure Code",OldSalesUOM);
 
-                TempSalesLine.CreateDim(
-                  DimMgt.TypeToTableID3(TempSalesLine.Type), TempSalesLine."No.",
-                  DATABASE::Job, TempSalesLine."Job No.",
-                  DATABASE::"Responsibility Center", TempSalesLine."Responsibility Center");
+                // TempSalesLine.CreateDim(
+                //   DimMgt.TypeToTableID3(TempSalesLine.Type), TempSalesLine."No.",
+                //   DATABASE::Job, TempSalesLine."Job No.",
+                //   DATABASE::"Responsibility Center", TempSalesLine."Responsibility Center");
 
                 OnItemSubstGetOnAfterSubstSalesLineItem(TempSalesLine);
 
@@ -185,13 +169,13 @@ codeunit 50123 INHItemSubst
                     if not SetupDataIsPresent then
                         GetSetupData;
                     OnCalcCustPriceOnBeforeCalcQtyAvail(Item, TempSalesLine, TempItemSubstitution);
-                    TempItemSubstitution."Quantity Avail. on Shpt. Date" :=
-                      AvailToPromise.QtyAvailabletoPromise(
-                        Item, GrossReq, SchedRcpt,
-                        Item.GetRangeMax("Date Filter"), CompanyInfo."Check-Avail. Time Bucket",
-                        CompanyInfo."Check-Avail. Period Calc.");
-                    Item.CalcFields(Inventory);
-                    OnCalcCustPriceOnAfterCalcQtyAvail(Item, TempSalesLine, TempItemSubstitution);
+                    // TempItemSubstitution."Quantity Avail. on Shpt. Date" :=
+                    //   AvailToPromise.QtyAvailabletoPromise(
+                    //     Item, GrossReq, SchedRcpt,
+                    //     Item.GetRangeMax("Date Filter"), CompanyInfo."Check-Avail. Time Bucket",
+                    //     CompanyInfo."Check-Avail. Period Calc.");
+                    // Item.CalcFields(INHInventory);
+                    // OnCalcCustPriceOnAfterCalcQtyAvail(Item, TempSalesLine, TempItemSubstitution);
                     TempItemSubstitution.Inventory := Item.Inventory;
                 end else begin
                     TempItemSubstitution."Substitute Type" := TempItemSubstitution."Substitute Type"::"Nonstock Item";
@@ -226,11 +210,11 @@ codeunit 50123 INHItemSubst
                     if not SetupDataIsPresent then
                         GetSetupData;
                     OnAssemblyCalcCustPriceOnBeforeCalcQtyAvail(Item, AssemblyLine, TempItemSubstitution);
-                    TempItemSubstitution."Quantity Avail. on Shpt. Date" :=
-                      AvailToPromise.QtyAvailabletoPromise(
-                        Item, GrossReq, SchedRcpt,
-                        Item.GetRangeMax("Date Filter"), CompanyInfo."Check-Avail. Time Bucket",
-                        CompanyInfo."Check-Avail. Period Calc.");
+                    // TempItemSubstitution."Quantity Avail. on Shpt. Date" :=
+                    //   AvailToPromise.QtyAvailabletoPromise(
+                    //     Item, GrossReq, SchedRcpt,
+                    //     Item.GetRangeMax("Date Filter"), CompanyInfo."Check-Avail. Time Bucket",
+                    //     CompanyInfo."Check-Avail. Period Calc.");
                     Item.CalcFields(Inventory);
                     OnAssemblyCalcCustPriceOnAfterCalcQtyAvail(Item, AssemblyLine, TempItemSubstitution);
                     TempItemSubstitution.Inventory := Item.Inventory;
@@ -344,11 +328,11 @@ codeunit 50123 INHItemSubst
                     if not SetupDataIsPresent then
                         GetSetupData;
                     OnInsertInSubstServiceListOnBeforeCalcQtyAvail(Item, ServInvLine, TempItemSubstitution);
-                    TempItemSubstitution."Quantity Avail. on Shpt. Date" :=
-                      AvailToPromise.QtyAvailabletoPromise(
-                        Item, GrossReq, SchedRcpt,
-                        Item.GetRangeMax("Date Filter"), 2,
-                        CompanyInfo."Check-Avail. Period Calc.");
+                    // TempItemSubstitution."Quantity Avail. on Shpt. Date" :=
+                    //   AvailToPromise.QtyAvailabletoPromise(
+                    //     Item, GrossReq, SchedRcpt,
+                    //     Item.GetRangeMax("Date Filter"), 2,
+                    //     CompanyInfo."Check-Avail. Period Calc.");
                     Item.CalcFields(Inventory);
                     OnInsertInSubstServiceListOnAfterCalcQtyAvail(Item, ServInvLine, TempItemSubstitution);
                     TempItemSubstitution.Inventory := Item.Inventory;
@@ -523,10 +507,10 @@ codeunit 50123 INHItemSubst
                 if CalcATP then begin
                     Item.Get(ItemSubstitution."Substitute No.");
                     OnCreateSubstListOnBeforeCalcQtyAvail(Item, ProdOrderCompSubst, TempItemSubstitution);
-                    TempItemSubstitution."Quantity Avail. on Shpt. Date" :=
-                      AvailToPromise.QtyAvailabletoPromise(
-                        Item, GrossReq, SchedRcpt,
-                        Item.GetRangeMax("Date Filter"), 2, ODF);
+                    // TempItemSubstitution."Quantity Avail. on Shpt. Date" :=
+                    //   AvailToPromise.QtyAvailabletoPromise(
+                    //     Item, GrossReq, SchedRcpt,
+                    //     Item.GetRangeMax("Date Filter"), 2, ODF);
                     Item.CalcFields(Inventory);
                     OnCreateSubstListOnAfterCalcQtyAvail(Item, ProdOrderCompSubst, TempItemSubstitution);
                     TempItemSubstitution.Inventory := Item.Inventory;

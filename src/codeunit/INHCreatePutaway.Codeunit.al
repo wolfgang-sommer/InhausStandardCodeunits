@@ -18,7 +18,7 @@ codeunit 50175 INHCreatePutaway
 
         PostedWhseRcptLine.Copy(Rec);
         Code;
-        Copy(PostedWhseRcptLine);
+        // Copy(PostedWhseRcptLine);
 
         OnAfterRun(Rec);
     end;

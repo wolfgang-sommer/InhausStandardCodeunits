@@ -182,7 +182,7 @@ codeunit 50136 INHSalesPostYesNo
                         Invoice := Selection in [2, 3];
                     end
                 else
-                    if not ConfirmManagement.ConfirmProcess(
+                    if not ConfirmManagement.GetResponse
                          StrSubstNo(PostConfirmQst, Format("Document Type")), true)
                     then
                         exit(false);

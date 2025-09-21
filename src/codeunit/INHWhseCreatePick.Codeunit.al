@@ -17,7 +17,7 @@ codeunit 50153 INHWhseCreatePick
         lo_re_WhseWorksheetLine: Record "Whse. Worksheet Line";
     begin
         WkshPickLine.Copy(Rec);
-        WhseCreatePick.fnk_SetParameter(bo_MDEProcess);  //C54°
+        // WhseCreatePick.SetParameter(bo_MDEProcess);  //C54°
         WhseCreatePick.SetWkshPickLine(WkshPickLine);
         //START C54° ---------------------------------
         if bo_MDEProcess then
@@ -26,23 +26,23 @@ codeunit 50153 INHWhseCreatePick
         WhseCreatePick.RunModal;
         //START C54° ---------------------------------
         if bo_MDEProcess then begin
-            WhseCreatePick.fnk_GetFilters(lo_re_WhseWorksheetLine);
+            // WhseCreatePick.GetFilters(lo_re_WhseWorksheetLine);
             Rec.CopyFilters(lo_re_WhseWorksheetLine);
         end;
         //STOP  C54° ---------------------------------
         if WhseCreatePick.GetResultMessage then begin
-            AutofillQtyToHandle(Rec);
-            WhseCreatePick.fnk_OpenPick;   //C54°
+            Rec.AutofillQtyToHandle(Rec);
+            // WhseCreatePick.OpenPick;   //C54°
         end;
         Clear(WhseCreatePick);
 
-        Reset;
-        SetCurrentKey("Worksheet Template Name", Name, "Location Code", "Sorting Sequence No.");
-        FilterGroup := 2;
-        SetRange("Worksheet Template Name", "Worksheet Template Name");
-        SetRange(Name, Name);
-        SetRange("Location Code", "Location Code");
-        FilterGroup := 0;
+        Rec.Reset();
+        Rec.SetCurrentKey("Worksheet Template Name", Name, "Location Code", "Sorting Sequence No.");
+        Rec.FilterGroup := 2;
+        // Rec.SetRange("Worksheet Template Name", "Worksheet Template Name");
+        // Rec.SetRange(Name, Name);
+        // Rec.SetRange("Location Code", "Location Code");
+        Rec.FilterGroup := 0;
     end;
 
     var

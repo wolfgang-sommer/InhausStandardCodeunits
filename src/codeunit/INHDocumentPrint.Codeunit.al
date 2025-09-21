@@ -226,7 +226,6 @@ codeunit 50171 INHDocumentPrint
         until DACHReportSelection.Next = 0;
     end;
 
-    [Scope('Internal')]
     procedure PrintIntrastatDisklabel()
     var
         DACHReportSelection: Record "DACH Report Selections";
@@ -239,7 +238,6 @@ codeunit 50171 INHDocumentPrint
         until DACHReportSelection.Next = 0;
     end;
 
-    [Scope('Internal')]
     procedure PrintSalesVATAdvNotAccProof(VATStatementName: Record "VAT Statement Name")
     var
         DACHReportSelection: Record "DACH Report Selections";
@@ -253,7 +251,6 @@ codeunit 50171 INHDocumentPrint
         until DACHReportSelection.Next = 0;
     end;
 
-    [Scope('Internal')]
     procedure PrintVATStatementSchedule(VATStatementName: Record "VAT Statement Name")
     var
         DACHReportSelection: Record "DACH Report Selections";

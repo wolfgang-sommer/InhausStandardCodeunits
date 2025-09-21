@@ -16,7 +16,7 @@ codeunit 50152 INHWhseActRegisterYesNo
     begin
         WhseActivLine.Copy(Rec);
         Code;
-        Copy(WhseActivLine);
+        Rec.Copy(WhseActivLine);
     end;
 
     var

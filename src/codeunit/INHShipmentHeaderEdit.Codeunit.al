@@ -17,24 +17,24 @@ codeunit 50142 INHShipmentHeaderEdit
     trigger OnRun()
     var
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_re_Benutzerberechtigung: Record Benutzerberechtigungen;
+        lo_re_Benutzerberechtigung: Record INHUserRights;
     begin
         SalesShptHeader := Rec;
         SalesShptHeader.LockTable;
         SalesShptHeader.Find;
-        SalesShptHeader."Shipping Agent Code" := "Shipping Agent Code";
-        SalesShptHeader."Shipping Agent Service Code" := "Shipping Agent Service Code";
-        SalesShptHeader."Package Tracking No." := "Package Tracking No.";
+        SalesShptHeader."Shipping Agent Code" := Rec."Shipping Agent Code";
+        SalesShptHeader."Shipping Agent Service Code" := Rec."Shipping Agent Service Code";
+        SalesShptHeader."Package Tracking No." := Rec."Package Tracking No.";
         OnBeforeSalesShptHeaderModify(SalesShptHeader, Rec);
-        SalesShptHeader.TestField("No.", "No.");
+        SalesShptHeader.TestField("No.", Rec."No.");
 
         //START A17° ---------------------------------
         lo_re_Benutzerberechtigung.Get(UserId);
-        lo_re_Benutzerberechtigung.TestField("VK-Fakturafreigabe", true);   //A17°.1
-        if (Fakturafreigabe = Fakturafreigabe::fakturiert) and (not lo_re_Benutzerberechtigung."VK-Fakturafreigabe") then
-            Error(TextErrorFakturaKZChange);
-        SalesShptHeader.Fakturafreigabe := Fakturafreigabe;
-        SalesShptHeader."Ladelistenr." := "Ladelistenr.";
+        // lo_re_Benutzerberechtigung.TestField("INHVK-Fakturafreigabe", true);   //A17°.1
+        // if (Fakturafreigabe = Fakturafreigabe::fakturiert) and (not lo_re_Benutzerberechtigung."VK-Fakturafreigabe") then
+        //     Error(TextErrorFakturaKZChange);
+        // SalesShptHeader.Fakturafreigabe := Fakturafreigabe;
+        // SalesShptHeader."Ladelistenr." := "Ladelistenr.";
         //STOP  A17° ---------------------------------
 
         SalesShptHeader.Modify;
@@ -43,7 +43,6 @@ codeunit 50142 INHShipmentHeaderEdit
 
     var
         SalesShptHeader: Record "Sales Shipment Header";
-        "+++TE_INHAUS+++": ;
         TextErrorFakturaKZChange: Label 'Fakturakennzeichen darf manuell nicht auf "fakturiert" gesezt werden !';
 
     [IntegrationEvent(false, false)]

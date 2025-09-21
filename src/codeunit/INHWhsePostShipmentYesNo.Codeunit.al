@@ -32,7 +32,7 @@ codeunit 50158 INHWhsePostShipmentYesNo
         HideDialog: Boolean;
         IsPosted: Boolean;
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_LogisticsMgt: Codeunit LogisticsMgt;
+        lo_cu_LogisticsMgt: Codeunit INHLogisticsMgt;
     begin
         HideDialog := false;
         IsPosted := false;
@@ -62,7 +62,7 @@ codeunit 50158 INHWhsePostShipmentYesNo
             Clear(WhsePostShipment);
         end;
 
-        lo_cu_LogisticsMgt.fnk_Cu5764_OnAfterCode(WhseShptLine);   //C27°
+        // lo_cu_LogisticsMgt.fnk_Cu5764_OnAfterCode(WhseShptLine);   //C27°
     end;
 
     [IntegrationEvent(false, false)]

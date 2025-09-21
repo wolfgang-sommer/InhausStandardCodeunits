@@ -250,7 +250,7 @@ codeunit 50138 INHSalesQuoteToOrder
         Opp.SetRange("Sales Document No.", SalesHeader."No.");
         Opp.SetRange(Status, Opp.Status::"In Progress");
         if Opp.FindFirst then begin
-            if not ConfirmManagement.ConfirmProcess(
+            if not ConfirmManagement.GetResponse
                  StrSubstNo(
                    Text000, Opp.TableCaption, Opp."Sales Document Type"::Quote,
                    Opp."Sales Document Type"::Order), true)

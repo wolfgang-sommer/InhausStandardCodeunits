@@ -694,7 +694,7 @@ codeunit 50163 INHWhseValidateSourceLine
     var
         WhseRcptLine: Record "Warehouse Receipt Line";
         WhseShptLine: Record "Warehouse Shipment Line";
-        lo_re_InitTabelle: Record "Init-Tabelle";
+        lo_re_InitTabelle: Record "INHInitTable";
         lo_bo_CheckOtherCompany: Boolean;
         lo_bo_WhseLinesExist: Boolean;
     begin

@@ -707,8 +707,8 @@ codeunit 50144 INHTransferOrderPostReceipt
 
     local procedure fnk_CheckTransfers(Par_Co_TransRcptHeaderNo: Code[20]; par_rec_WhseRcptHeader: Record "Warehouse Receipt Header")
     var
-        lo_re_Inittabelle: Record "Init-Tabelle";
-        lo_re_InittabelleFremd: Record "Init-Tabelle";
+        lo_re_Inittabelle: Record "INHInitTable";
+        lo_re_InittabelleFremd: Record "INHInitTable";
         lo_re_Item: Record Item;
         lo_re_SalesLine: Record "Sales Line";
         lo_re_SalesHeader: Record "Sales Header";
@@ -716,7 +716,7 @@ codeunit 50144 INHTransferOrderPostReceipt
         lo_re_TransferHeader: Record "Transfer Header";
         lo_re_TransRcptHdr: Record "Transfer Receipt Header";
         lo_cu_EGWSend: Codeunit "EGW Logging Send";
-        lo_cu_LogisticsMgt: Codeunit LogisticsMgt;
+        lo_cu_LogisticsMgt: Codeunit INHLogisticsMgt;
         lo_cu_ICMgt: Codeunit ICMgt;
         "lo_re_Verfügbarkeit": Codeunit AvailabilityMgt;
         lo_re_CheckTransfer: Report "Verfügbarkeit Transfer prüfen";

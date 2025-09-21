@@ -416,7 +416,7 @@ codeunit 50154 INHWhseCreateSourceDocument
         Item: Record Item;
         "+++LO_VAR_INHAUS+++": Boolean;
         lo_cu_ItemMgt: Codeunit ItemMgt;
-        lo_cu_LogisticsMgt: Codeunit LogisticsMgt;
+        lo_cu_LogisticsMgt: Codeunit INHLogisticsMgt;
     begin
         with WhseReceiptLine do begin
             Item."No." := "Item No.";
@@ -771,7 +771,7 @@ codeunit 50154 INHWhseCreateSourceDocument
         lo_re_ReserveEntry: Record "Reservation Entry";
         lo_re_ReserveEntryForeign: Record "Reservation Entry";
         lo_cu_ItemMgt: Codeunit ItemMgt;
-        lo_cu_LogisticsMgt: Codeunit LogisticsMgt;
+        lo_cu_LogisticsMgt: Codeunit INHLogisticsMgt;
         lo_in_NextLineNo: Integer;
         WhseMgt: Codeunit "Whse. Management";
     begin

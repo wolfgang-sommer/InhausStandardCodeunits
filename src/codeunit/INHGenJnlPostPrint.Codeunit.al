@@ -1,4 +1,4 @@
-codeunit 50114 INHGenJnlPost+Print
+codeunit 50114 INHGenJnlPostPrint
 {
     // +---------------------------------------------+
     // +                                             +
@@ -18,7 +18,7 @@ codeunit 50114 INHGenJnlPost+Print
     begin
         GenJnlLine.Copy(Rec);
         Code;
-        Copy(GenJnlLine);
+        // Copy(GenJnlLine);
     end;
 
     var
@@ -54,7 +54,7 @@ codeunit 50114 INHGenJnlPost+Print
             OnBeforePostJournalBatch(GenJnlLine, HideDialog);
 
             if not HideDialog then
-                if not ConfirmManagement.ConfirmProcess(Text001, true) then
+                if not ConfirmManagement.GetResponse(Text001, true) then
                     exit;
 
             TempJnlBatchName := "Journal Batch Name";
@@ -67,8 +67,9 @@ codeunit 50114 INHGenJnlPost+Print
             OnAfterPostJournalBatch(GenJnlLine);
 
             //START Axx°.1 ---------------------------------
-            //  IF GLReg.GET("Line No.") THEN BEGIN
-            if GLReg.Get(GenJnlPostBatch.fnk_GetGLRegNo) then begin
+            IF GLReg.GET("Line No.") THEN BEGIN
+
+                // if GLReg.Get(GenJnlPostBatch.GetGLRegNo) then begin
                 //STOP  Axx°.1 ---------------------------------
                 if GenJnlTemplate."Cust. Receipt Report ID" <> 0 then begin
                     CustLedgEntry.SetRange("Entry No.", GLReg."From Entry No.", GLReg."To Entry No.");

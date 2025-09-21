@@ -1,20 +1,5 @@
-codeunit 50150 INHWarehouseDocumentPrint
+codeunit 50180 INHWarehouseDocumentPrint
 {
-    // +---------------------------------------------+
-    // +                                             +
-    // +           Inhaus Handels GmbH               +
-    // +                                             +
-    // +---------------------------------------------+
-    // 
-    // ID    Requ.   KZ   Datum     Beschreibung
-    // ------------------------------------------------------------
-    // A08°          RBI  09.06.08  Aufruf geändert
-
-
-    trigger OnRun()
-    begin
-    end;
-
     procedure PrintPickHeader(WhseActivHeader: Record "Warehouse Activity Header")
     var
         ReportSelectionWhse: Record "Report Selection Warehouse";
@@ -45,7 +30,7 @@ codeunit 50150 INHWarehouseDocumentPrint
 
         WhseActivHeader.SetRange(Type, WhseActivHeader.Type::"Put-away");
         WhseActivHeader.SetRange("No.", WhseActivHeader."No.");
-        ReportSelectionWhse.PrintWhseActivHeader(WhseActivHeader, ReportSelectionWhse.Usage::"Put-away", false);
+        // ReportSelectionWhse.PrintWhseActivHeader(WhseActivHeader, ReportSelectionWhse.Usage::"Put-away", false);
     end;
 
     procedure PrintMovementHeader(WhseActivHeader: Record "Warehouse Activity Header")
@@ -60,7 +45,7 @@ codeunit 50150 INHWarehouseDocumentPrint
 
         WhseActivHeader.SetRange(Type, WhseActivHeader.Type::Movement);
         WhseActivHeader.SetRange("No.", WhseActivHeader."No.");
-        ReportSelectionWhse.PrintWhseActivHeader(WhseActivHeader, ReportSelectionWhse.Usage::Movement, false);
+        // ReportSelectionWhse.PrintWhseActivHeader(WhseActivHeader, ReportSelectionWhse.Usage::Movement, false);
     end;
 
     procedure PrintInvtPickHeader(WhseActivHeader: Record "Warehouse Activity Header"; HideDialog: Boolean)
@@ -76,7 +61,7 @@ codeunit 50150 INHWarehouseDocumentPrint
 
         WhseActivHeader.SetRange(Type, WhseActivHeader.Type::"Invt. Pick");
         WhseActivHeader.SetRange("No.", WhseActivHeader."No.");
-        ReportSelectionWhse.PrintWhseActivHeader(WhseActivHeader, ReportSelectionWhse.Usage::"Invt. Pick", HideDialog);
+        // ReportSelectionWhse.PrintWhseActivHeader(WhseActivHeader, ReportSelectionWhse.Usage::"Invt. Pick", HideDialog);
     end;
 
     procedure PrintInvtPutAwayHeader(WhseActivHeader: Record "Warehouse Activity Header"; HideDialog: Boolean)
@@ -91,7 +76,7 @@ codeunit 50150 INHWarehouseDocumentPrint
 
         WhseActivHeader.SetRange(Type, WhseActivHeader.Type::"Invt. Put-away");
         WhseActivHeader.SetRange("No.", WhseActivHeader."No.");
-        ReportSelectionWhse.PrintWhseActivHeader(WhseActivHeader, ReportSelectionWhse.Usage::"Invt. Put-away", HideDialog);
+        // ReportSelectionWhse.PrintWhseActivHeader(WhseActivHeader, ReportSelectionWhse.Usage::"Invt. Put-away", HideDialog);
     end;
 
     procedure PrintInvtMovementHeader(WhseActivHeader: Record "Warehouse Activity Header"; HideDialog: Boolean)
@@ -106,7 +91,7 @@ codeunit 50150 INHWarehouseDocumentPrint
 
         WhseActivHeader.SetRange(Type, WhseActivHeader.Type::"Invt. Movement");
         WhseActivHeader.SetRange("No.", WhseActivHeader."No.");
-        ReportSelectionWhse.PrintWhseActivHeader(WhseActivHeader, ReportSelectionWhse.Usage::"Invt. Movement", HideDialog);
+        // ReportSelectionWhse.PrintWhseActivHeader(WhseActivHeader, ReportSelectionWhse.Usage::"Invt. Movement", HideDialog);
     end;
 
     procedure PrintRcptHeader(WarehouseReceiptHeader: Record "Warehouse Receipt Header")
@@ -151,7 +136,7 @@ codeunit 50150 INHWarehouseDocumentPrint
         WarehouseShipmentHeader.SetRange("No.", WarehouseShipmentHeader."No.");
         //START A08° ---------------------------------
         // ReportSelectionWhse.PrintWhseShipmentHeader(WarehouseShipmentHeader,FALSE);
-        REPORT.Run(REPORT::Kommissionierschein, false, false, WarehouseShipmentHeader);
+        // REPORT.Run(REPORT::Kommissionierschein, false, false, WarehouseShipmentHeader);
         //STOP  A08° ---------------------------------
     end;
 

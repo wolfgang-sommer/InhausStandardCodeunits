@@ -71,7 +71,7 @@ codeunit 50126 INHPurchPost
         SuppressCommit := SavedSuppressCommit;
 
         GetGLSetup;
-        GetCurrency("Currency Code");
+        GetCurrency(Rec."Currency Code");
 
         PurchSetup.Get;
         PurchHeader := Rec;
@@ -155,15 +155,15 @@ codeunit 50126 INHPurchPost
         end;
 
         //START A04°.2 ---------------------------------
-        if WhseRcptHeader."Skip Availability Check" then begin
-            Rec.fnk_SetSkipAvailabilityCheck(true);
-        end;
+        // if WhseRcptHeader."Skip Availability Check" then begin
+        //     Rec.fnk_SetSkipAvailabilityCheck(true);
+        // end;
         //STOP  A04°.2 ---------------------------------
 
-        OnAfterPostPurchaseDoc(
-          Rec, GenJnlPostLine, PurchRcptHeader."No.", ReturnShptHeader."No.", PurchInvHeader."No.", PurchCrMemoHeader."No.",
-          SuppressCommit);
-        OnAfterPostPurchaseDocDropShipment(SalesShptHeader."No.", SuppressCommit);
+        // OnAfterPostPurchaseDoc(
+        //   Rec, GenJnlPostLine, PurchRcptHeader."No.", ReturnShptHeader."No.", PurchInvHeader."No.", PurchCrMemoHeader."No.",
+        //   SuppressCommit);
+        // OnAfterPostPurchaseDocDropShipment(SalesShptHeader."No.", SuppressCommit);
     end;
 
     var
@@ -443,13 +443,13 @@ codeunit 50126 INHPurchPost
     begin
         with PurchHeader do begin
             // Check
-            ErrorMessageMgt.PushContext(RecordId, 0, CheckPurchHeaderMsg);
+            // ErrorMessageMgt.PushContext(RecordId, 0, CheckPurchHeaderMsg);
             CheckMandatoryHeaderFields(PurchHeader);
             if GenJnlCheckLine.IsDateNotAllowed("Posting Date", SetupRecID) then
                 ErrorMessageMgt.LogContextFieldError(
                   FieldNo("Posting Date"), StrSubstNo(PostingDateNotAllowedErr, FieldCaption("Posting Date")),
                   SetupRecID, ErrorMessageMgt.GetFieldNo(SetupRecID.TableNo, GLSetup.FieldName("Allow Posting From")),
-                  ErrorMessageMgt.GetHelpCodeForAllowedPostingDate);
+                  '');// ErrorMessageMgt.GetHelpCodeForAllowedPostingDate);
 
             SetPostingFlags(PurchHeader);
             InitProgressWindow(PurchHeader);
@@ -498,7 +498,7 @@ codeunit 50126 INHPurchPost
                 CheckExtDocNo(PurchHeader);
 
             OnAfterCheckPurchDoc(PurchHeader, SuppressCommit, WhseShip, WhseReceive);
-            ErrorMessageMgt.Finish;
+            // ErrorMessageMgt.Finish;
 
             // Update
             if Invoice then
@@ -885,7 +885,7 @@ codeunit 50126 INHPurchPost
                 PurchLine."Qty. to Invoice" := QtyToBeInvoiced;
             end;
 
-            ItemJnlLine."Geliefert von" := WhseRcptHeader."Assigned User ID";   //Axx°.1
+            ItemJnlLine."INHGeliefert von" := WhseRcptHeader."Assigned User ID";   //Axx°.1
 
             if QtyToBeInvoiced <> 0 then begin
                 if (QtyToBeInvoicedBase <> 0) and (PurchLine.Type = PurchLine.Type::Item) then
@@ -1030,8 +1030,8 @@ codeunit 50126 INHPurchPost
     begin
         with PurchLine do begin
             ItemJnlLine.Subcontracting := true;
-            ItemJnlLine."Quantity (Base)" := CalcBaseQty("No.", "Unit of Measure Code", QtyToBeReceived);
-            ItemJnlLine."Invoiced Qty. (Base)" := CalcBaseQty("No.", "Unit of Measure Code", QtyToBeInvoiced);
+            // ItemJnlLine."Quantity (Base)" := CalcBaseQty("No.", "Unit of Measure Code", QtyToBeReceived);
+            // ItemJnlLine."Invoiced Qty. (Base)" := CalcBaseQty("No.", "Unit of Measure Code", QtyToBeInvoiced);
             ItemJnlLine."Unit Cost" := "Unit Cost (LCY)";
             ItemJnlLine."Unit Cost (ACY)" := "Unit Cost";
             ItemJnlLine."Output Quantity (Base)" := ItemJnlLine."Quantity (Base)";
@@ -1120,7 +1120,7 @@ codeunit 50126 INHPurchPost
     local procedure ShouldPostWhseJnlLine(PurchLine: Record "Purchase Line"; var ItemJnlLine: Record "Item Journal Line"; var TempWhseJnlLine: Record "Warehouse Journal Line" temporary): Boolean
     var
         "+++VAR_Inhaus+++": Integer;
-        lo_cu_OverallVariableMgt: Codeunit OverallVariableMgt;
+        lo_cu_OverallVariableMgt: Codeunit INHOverallVariableMgt;
     begin
         with PurchLine do
             if ("Location Code" <> '') and (Type = Type::Item) and (ItemJnlLine.Quantity <> 0) and
@@ -1130,7 +1130,7 @@ codeunit 50126 INHPurchPost
                 if (("Document Type" in ["Document Type"::Invoice, "Document Type"::"Credit Memo"]) and
                     Location."Directed Put-away and Pick") or
                    (Location."Bin Mandatory" and not (WhseReceive or WhseShip or InvtPickPutaway or "Drop Shipment"))
-                   or (Location."Directed Put-away and Pick" and (lo_cu_OverallVariableMgt.fnk_GetPurchaseDirectWhsePosting))  //C54°
+                   or (Location."Directed Put-away and Pick" and (lo_cu_OverallVariableMgt.GetPurchaseDirectWhsePosting))  //C54°
                 then begin
                     CreateWhseJnlLine(ItemJnlLine, PurchLine, TempWhseJnlLine);
                     exit(true);
@@ -1160,7 +1160,7 @@ codeunit 50126 INHPurchPost
             ItemJnlLine2."External Document No." := GenJnlLineExtDocNo;
             ItemJnlLine2."Item Charge No." := "Item Charge No.";
             ItemJnlLine2.Description := ItemChargePurchLine.Description;
-            ItemJnlLine2."Description 2" := ItemChargePurchLine."Description 2";   //Axx°
+            ItemJnlLine2."INHDescription 2" := ItemChargePurchLine."Description 2";   //Axx°
             ItemJnlLine2."Document Line No." := ItemChargePurchLine."Line No.";
             ItemJnlLine2."Unit of Measure Code" := '';
             ItemJnlLine2."Qty. per Unit of Measure" := 1;
@@ -2104,15 +2104,15 @@ codeunit 50126 INHPurchPost
             ResetTempLines(TempPurchLine);
             if TempPurchLine.FindFirst then
                 repeat
-                    if TempPurchLine."Deferral Code" <> '' then
-                        DeferralUtilities.RemoveOrSetDeferralSchedule(
-                          '', DeferralUtilities.GetPurchDeferralDocType, '', '',
-                          TempPurchLine."Document Type",
-                          TempPurchLine."Document No.",
-                          TempPurchLine."Line No.", 0, 0D,
-                          TempPurchLine.Description,
-                          '',
-                          true);
+                    // if TempPurchLine."Deferral Code" <> '' then
+                    //     DeferralUtilities.RemoveOrSetDeferralSchedule(
+                    //       '', DeferralUtilities.GetPurchDeferralDocType, '', '',
+                    //       TempPurchLine."Document Type",
+                    //       TempPurchLine."Document No.",
+                    //       TempPurchLine."Line No.", 0, 0D,
+                    //       TempPurchLine.Description,
+                    //       '',
+                    //       true);
                     if TempPurchLine.HasLinks then
                         TempPurchLine.DeleteLinks;
                 until TempPurchLine.Next = 0;
@@ -2370,19 +2370,20 @@ codeunit 50126 INHPurchPost
     begin
         with PrepmtPurchLine do
             if "Prepayment Line" then
-                if "Prepmt. Amount Inv. (LCY)" <> 0 then begin
-                    AdjAmount := -"Prepmt. Amount Inv. (LCY)";
-                    TempInvoicePostBuffer.FillPrepmtAdjBuffer(TempInvoicePostBuffer, InvoicePostBuffer,
-                      "No.", AdjAmount, PurchHeader."Currency Code" = '');
-                    TempInvoicePostBuffer.FillPrepmtAdjBuffer(TempInvoicePostBuffer, InvoicePostBuffer,
-                      PurchPostPrepayments.GetCorrBalAccNo(PurchHeader, AdjAmount > 0),
-                      -AdjAmount,
-                      PurchHeader."Currency Code" = '');
-                end else
-                    if ("Prepayment %" = 100) and ("Prepmt. VAT Amount Inv. (LCY)" <> 0) then
-                        TempInvoicePostBuffer.FillPrepmtAdjBuffer(TempInvoicePostBuffer, InvoicePostBuffer,
-                          PurchPostPrepayments.GetInvRoundingAccNo(PurchHeader."Vendor Posting Group"),
-                          "Prepmt. VAT Amount Inv. (LCY)", PurchHeader."Currency Code" = '');
+                // if "Prepmt. Amount Inv. (LCY)" <> 0 then begin
+                //     AdjAmount := -"Prepmt. Amount Inv. (LCY)";
+                    // TempInvoicePostBuffer.FillPrepmtAdjBuffer(TempInvoicePostBuffer, InvoicePostBuffer,
+                    //   "No.", AdjAmount, PurchHeader."Currency Code" = '');
+                    // TempInvoicePostBuffer.FillPrepmtAdjBuffer(TempInvoicePostBuffer, InvoicePostBuffer,
+                    //   PurchPostPrepayments.GetCorrBalAccNo(PurchHeader, AdjAmount > 0),
+                    //   -AdjAmount,
+                    //   PurchHeader."Currency Code" = '');
+                // end else
+                //     if ("Prepayment %" = 100) and ("Prepmt. VAT Amount Inv. (LCY)" <> 0) then
+                //         TempInvoicePostBuffer.FillPrepmtAdjBuffer(TempInvoicePostBuffer, InvoicePostBuffer,
+                //           PurchPostPrepayments.GetInvRoundingAccNo(PurchHeader."Vendor Posting Group"),
+                //           "Prepmt. VAT Amount Inv. (LCY)", PurchHeader."Currency Code" = '');
+        ;
     end;
 
     local procedure GetCurrency(CurrencyCode: Code[10])
@@ -2961,10 +2962,10 @@ codeunit 50126 INHPurchPost
         GenJnlLine: Record "Gen. Journal Line";
     begin
         with GenJnlLine do begin
-            InitNewLine(
-              PurchHeader."Posting Date", PurchHeader."Document Date", PurchHeader."Posting Description",
-              PurchHeader."Shortcut Dimension 1 Code", PurchHeader."Shortcut Dimension 2 Code",
-              PurchHeader."Dimension Set ID", PurchHeader."Reason Code");
+            // InitNewLine(
+            //   PurchHeader."Posting Date", PurchHeader."Document Date", PurchHeader."Posting Description",
+            //   PurchHeader."Shortcut Dimension 1 Code", PurchHeader."Shortcut Dimension 2 Code",
+            //   PurchHeader."Dimension Set ID", PurchHeader."Reason Code");
 
             CopyDocumentFields(DocType, DocNo, ExtDocNo, SourceCode, '');
             "Account Type" := "Account Type"::Vendor;
@@ -2996,10 +2997,10 @@ codeunit 50126 INHPurchPost
         FindVendorLedgerEntry(DocType, DocNo, VendLedgEntry);
 
         with GenJnlLine do begin
-            InitNewLine(
-              PurchHeader."Posting Date", PurchHeader."Document Date", PurchHeader."Posting Description",
-              PurchHeader."Shortcut Dimension 1 Code", PurchHeader."Shortcut Dimension 2 Code",
-              PurchHeader."Dimension Set ID", PurchHeader."Reason Code");
+            // InitNewLine(
+            //   PurchHeader."Posting Date", PurchHeader."Document Date", PurchHeader."Posting Description",
+            //   PurchHeader."Shortcut Dimension 1 Code", PurchHeader."Shortcut Dimension 2 Code",
+            //   PurchHeader."Dimension Set ID", PurchHeader."Reason Code");
 
             CopyDocumentFields(0, DocNo, ExtDocNo, SourceCode, '');
             "Account Type" := "Account Type"::Vendor;
@@ -3553,7 +3554,7 @@ codeunit 50126 INHPurchPost
         WhseValidateSourceLine: Codeunit "Whse. Validate Source Line";
         ShowError: Boolean;
         "+++VAR_Inhaus+++": Integer;
-        lo_cu_OverallVariableMgt: Codeunit OverallVariableMgt;
+        lo_cu_OverallVariableMgt: Codeunit INHOverallVariableMgt;
     begin
         with TempItemPurchLine do begin
             if "Prod. Order No." <> '' then
@@ -3581,7 +3582,7 @@ codeunit 50126 INHPurchPost
                                ((Location."Require Shipment" or Location."Require Pick") and (Quantity >= 0))
                             then begin
                                 if Location."Directed Put-away and Pick"
-                                   and not lo_cu_OverallVariableMgt.fnk_GetPurchaseDirectWhsePosting   //C54°
+                                   and not lo_cu_OverallVariableMgt.GetPurchaseDirectWhsePosting   //C54°
                                 then
                                     ShowError := true
                                 else
@@ -3758,9 +3759,9 @@ codeunit 50126 INHPurchPost
                     if Item."Item Tracking Code" <> '' then begin
                         Inbound := (Quantity * SignFactor) > 0;
                         ItemTrackingCode.Code := Item."Item Tracking Code";
-                        ItemTrackingManagement.GetItemTrackingSettings(ItemTrackingCode,
-                          ItemJnlLine."Entry Type"::Purchase, Inbound,
-                          SNRequired, LotRequired, SNInfoRequired, LotInfoRequired);
+                        // ItemTrackingManagement.GetItemTrackingSettings(ItemTrackingCode,
+                        //   ItemJnlLine."Entry Type"::Purchase, Inbound,
+                        //   SNRequired, LotRequired, SNInfoRequired, LotInfoRequired);
                         CheckPurchLine := not SNRequired and not LotRequired;
                         if CheckPurchLine then
                             CheckPurchLine := CheckTrackingExists(TempItemPurchLine);
@@ -3951,7 +3952,7 @@ codeunit 50126 INHPurchPost
             TempTrackingSpecification.Reset;
             TempTrackingSpecification.SetSourceFilter(
               DATABASE::"Purchase Line", PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.", false);
-            TempTrackingSpecification.SetSourceFilter2('', 0);
+            // TempTrackingSpecification.SetSourceFilter2('', 0);
             if TempTrackingSpecification.IsEmpty then
                 ReserveSalesLine.TransferSalesLineToItemJnlLine(
                   SalesOrderLine, ItemJnlLine, QtyToBeShippedBase, CheckApplFromItemEntry, false)
@@ -4517,9 +4518,9 @@ codeunit 50126 INHPurchPost
         ICGenJnlLineNo := ICGenJnlLineNo + 1;
 
         with TempICGenJnlLine do begin
-            InitNewLine(PurchHeader."Posting Date", PurchHeader."Document Date", PurchHeader."Posting Description",
-              PurchLine."Shortcut Dimension 1 Code", PurchLine."Shortcut Dimension 2 Code", PurchLine."Dimension Set ID",
-              PurchHeader."Reason Code");
+            // InitNewLine(PurchHeader."Posting Date", PurchHeader."Document Date", PurchHeader."Posting Description",
+            //   PurchLine."Shortcut Dimension 1 Code", PurchLine."Shortcut Dimension 2 Code", PurchLine."Dimension Set ID",
+            //   PurchHeader."Reason Code");
             "Line No." := ICGenJnlLineNo;
 
             CopyDocumentFields(GenJnlLineDocType, GenJnlLineDocNo, GenJnlLineExtDocNo, SrcCode, PurchHeader."Posting No. Series");
@@ -4546,7 +4547,7 @@ codeunit 50126 INHPurchPost
             end;
             Validate("Bal. VAT Prod. Posting Group", PurchLine."VAT Prod. Posting Group");
             "IC Partner Code" := PurchLine."IC Partner Code";
-            "IC Partner G/L Acc. No." := PurchLine."IC Partner Reference";
+            // "IC Partner G/L Acc. No." := PurchLine."IC Partner Reference";
             "IC Direction" := "IC Direction"::Outgoing;
             ICPartner.Get(PurchLine."IC Partner Code");
             if ICPartner."Cost Distribution in LCY" and (PurchLine."Currency Code" <> '') then begin
@@ -4888,10 +4889,10 @@ codeunit 50126 INHPurchPost
         PurchLine.LockTable;
         SalesLine.LockTable;
         GetGLSetup;
-        if not GLSetup.OptimGLEntLockForMultiuserEnv then begin
-            GLEntry.LockTable;
-            if GLEntry.FindLast then;
-        end;
+        // if not GLSetup.OptimGLEntLockForMultiuserEnv then begin
+        //     GLEntry.LockTable;
+        //     if GLEntry.FindLast then;
+        // end;
     end;
 
     local procedure "MAX"(number1: Integer; number2: Integer): Integer
@@ -5154,7 +5155,7 @@ codeunit 50126 INHPurchPost
             then begin
                 InsertTempSKU("Location Code", "No.", "Variant Code");
                 if GuiAllowed then   //B29°
-                    if not ConfirmManagement.ConfirmProcess(
+                    if not ConfirmManagement.GetResponse(
                          StrSubstNo(
                            ReservationDisruptedQst, FieldCaption("No."), Item."No.", FieldCaption("Location Code"),
                            "Location Code", FieldCaption("Variant Code"), "Variant Code"), true)
@@ -5594,7 +5595,7 @@ codeunit 50126 INHPurchPost
                 PurchInvHeader.SetRange("Buy-from Vendor No.", "Buy-from Vendor No.");
                 PurchInvHeader.SetRange("Pay-to Vendor No.", "Pay-to Vendor No.");
                 if PurchInvHeader.FindFirst then
-                    if not ConfirmManagement.ConfirmProcess(
+                    if not ConfirmManagement.GetResponse(
                          StrSubstNo(PostedInvoiceDuplicateQst, PurchInvHeader."No.", "No."), true)
                     then
                         Error('');
@@ -5604,20 +5605,20 @@ codeunit 50126 INHPurchPost
                     PurchHeader2.SetRange("Document Type", "Document Type"::Invoice);
                     PurchHeader2.SetRange("Vendor Order No.", "Vendor Order No.");
                     if PurchHeader2.FindFirst then
-                        if not ConfirmManagement.ConfirmProcess(
+                        if not ConfirmManagement.GetResponse(
                              StrSubstNo(UnpostedInvoiceDuplicateQst, "No.", PurchHeader2."No."), true)
                         then
                             Error('');
                     ICInboxPurchHeader.SetRange("Document Type", "Document Type"::Invoice);
                     ICInboxPurchHeader.SetRange("Vendor Order No.", "Vendor Order No.");
                     if ICInboxPurchHeader.FindFirst then
-                        if not ConfirmManagement.ConfirmProcess(
+                        if not ConfirmManagement.GetResponse(
                              StrSubstNo(InvoiceDuplicateInboxQst, "No.", ICInboxPurchHeader."No."), true)
                         then
                             Error('');
                     PurchInvHeader.SetRange("Vendor Order No.", "Vendor Order No.");
                     if PurchInvHeader.FindFirst then
-                        if not ConfirmManagement.ConfirmProcess(
+                        if not ConfirmManagement.GetResponse(
                              StrSubstNo(PostedInvoiceDuplicateQst, PurchInvHeader."No.", "No."), true)
                         then
                             Error('');
@@ -5626,20 +5627,20 @@ codeunit 50126 INHPurchPost
                     PurchHeader2.SetRange("Document Type", "Document Type"::Order);
                     PurchHeader2.SetRange("Vendor Order No.", "Vendor Order No.");
                     if PurchHeader2.FindFirst then
-                        if not ConfirmManagement.ConfirmProcess(
+                        if not ConfirmManagement.GetResponse(
                              StrSubstNo(OrderFromSameTransactionQst, PurchHeader2."No.", "No."), true)
                         then
                             Error('');
                     ICInboxPurchHeader.SetRange("Document Type", "Document Type"::Order);
                     ICInboxPurchHeader.SetRange("Vendor Order No.", "Vendor Order No.");
                     if ICInboxPurchHeader.FindFirst then
-                        if not ConfirmManagement.ConfirmProcess(
+                        if not ConfirmManagement.GetResponse(
                              StrSubstNo(DocumentFromSameTransactionQst, "No.", ICInboxPurchHeader."No."), true)
                         then
                             Error('');
                     PurchInvHeader.SetRange("Vendor Order No.", "Vendor Order No.");
                     if PurchInvHeader.FindFirst then
-                        if not ConfirmManagement.ConfirmProcess(
+                        if not ConfirmManagement.GetResponse(
                              StrSubstNo(PostedInvoiceFromSameTransactionQst, PurchInvHeader."No.", "No."), true)
                         then
                             Error('');
@@ -5649,7 +5650,7 @@ codeunit 50126 INHPurchPost
                         PurchInvHeader.SetRange("Buy-from Vendor No.", "Buy-from Vendor No.");
                         PurchInvHeader.SetRange("Pay-to Vendor No.", "Pay-to Vendor No.");
                         if PurchInvHeader.FindFirst then
-                            if not ConfirmManagement.ConfirmProcess(
+                            if not ConfirmManagement.GetResponse(
                                  StrSubstNo(PostedInvoiceFromSameTransactionQst, PurchInvHeader."No.", "No."), true)
                             then
                                 Error('');
@@ -5754,8 +5755,8 @@ codeunit 50126 INHPurchPost
             WhseShip := TempWhseShptHeader.FindFirst;
             if Receive then begin
                 CheckTrackingSpecification(PurchHeader, TempPurchLine);
-                if not (WhseReceive or WhseShip or InvtPickPutaway) then
-                    CheckWarehouse(TempPurchLine);
+                // if not (WhseReceive or WhseShip or InvtPickPutaway) then
+                //     CheckWarehouse(TempPurchLine);
             end;
             OnAfterCheckTrackingAndWarehouseForReceive(
               PurchHeader, Receive, SuppressCommit, TempWhseShptHeader, TempWhseRcptHeader, TempPurchLine);
@@ -5777,8 +5778,8 @@ codeunit 50126 INHPurchPost
             WhseShip := TempWhseShptHeader.FindFirst;
             if Ship then begin
                 CheckTrackingSpecification(PurchHeader, TempPurchLine);
-                if not (WhseShip or WhseReceive or InvtPickPutaway) then
-                    CheckWarehouse(TempPurchLine);
+                // if not (WhseShip or WhseReceive or InvtPickPutaway) then
+                //     CheckWarehouse(TempPurchLine);
             end;
             OnAfterCheckTrackingAndWarehouseForShip(PurchHeader, Ship, SuppressCommit);
             exit(Ship);
@@ -5951,14 +5952,14 @@ codeunit 50126 INHPurchPost
         GenJnlLine: Record "Gen. Journal Line";
     begin
         with GenJnlLine do begin
-            InitNewLine(
-              PurchHeader."Posting Date", PurchHeader."Document Date", PurchHeader."Posting Description",
-              InvoicePostBuffer."Global Dimension 1 Code", InvoicePostBuffer."Global Dimension 2 Code",
-              InvoicePostBuffer."Dimension Set ID", PurchHeader."Reason Code");
+            // InitNewLine(
+            //   PurchHeader."Posting Date", PurchHeader."Document Date", PurchHeader."Posting Description",
+            //   InvoicePostBuffer."Global Dimension 1 Code", InvoicePostBuffer."Global Dimension 2 Code",
+            //   InvoicePostBuffer."Dimension Set ID", PurchHeader."Reason Code");
 
             CopyDocumentFields(GenJnlLineDocType, GenJnlLineDocNo, GenJnlLineExtDocNo, SrcCode, '');
             CopyFromPurchHeader(PurchHeader);
-            CopyFromInvoicePostBuffer(InvoicePostBuffer);
+            // CopyFromInvoicePostBuffer(InvoicePostBuffer);
 
             if InvoicePostBuffer.Type <> InvoicePostBuffer.Type::"Prepmt. Exch. Rate Difference" then
                 "Gen. Posting Type" := "Gen. Posting Type"::Purchase;
@@ -5971,7 +5972,7 @@ codeunit 50126 INHPurchPost
                     InvoicePostBuffer."FA Posting Type"::Appreciation:
                         "FA Posting Type" := "FA Posting Type"::Appreciation;
                 end;
-                CopyFromInvoicePostBufferFA(InvoicePostBuffer);
+                // CopyFromInvoicePostBufferFA(InvoicePostBuffer);
             end;
 
             OnBeforePostInvPostBuffer(GenJnlLine, InvoicePostBuffer, PurchHeader, GenJnlPostLine, PreviewMode, SuppressCommit);
@@ -5995,54 +5996,54 @@ codeunit 50126 INHPurchPost
         if PurchLine."Deferral Code" <> '' then begin
             DeferralTemplate.Get(PurchLine."Deferral Code");
 
-            if TempDeferralHeader.Get(DeferralUtilities.GetPurchDeferralDocType, '', '',
-                 PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.")
-            then begin
-                if TempDeferralHeader."Amount to Defer" <> 0 then begin
-                    DeferralUtilities.FilterDeferralLines(
-                      TempDeferralLine, DeferralUtilities.GetPurchDeferralDocType, '', '',
-                      PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.");
-                    // Remainder\Initial deferral pair
-                    DeferralPostBuffer.PreparePurch(PurchLine, GenJnlLineDocNo);
-                    DeferralPostBuffer."Posting Date" := PurchHeader."Posting Date";
-                    DeferralPostBuffer.Description := PurchHeader."Posting Description";
-                    DeferralPostBuffer."Period Description" := DeferralTemplate."Period Description";
-                    DeferralPostBuffer."Deferral Line No." := InvDefLineNo;
-                    DeferralPostBuffer.PrepareInitialPair(
-                      InvoicePostBuffer, RemainAmtToDefer, RemainAmtToDeferACY, PurchAccount, DeferralAccount);
-                    DeferralPostBuffer.Update(DeferralPostBuffer, InvoicePostBuffer);
-                    if (RemainAmtToDefer <> 0) or (RemainAmtToDeferACY <> 0) then begin
-                        DeferralPostBuffer.PrepareRemainderPurchase(
-                          PurchLine, RemainAmtToDefer, RemainAmtToDeferACY, PurchAccount, DeferralAccount, InvDefLineNo);
-                        DeferralPostBuffer.Update(DeferralPostBuffer, InvoicePostBuffer);
-                    end;
+            // if TempDeferralHeader.Get(DeferralUtilities.GetPurchDeferralDocType, '', '',
+            //      PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.")
+            // then begin
+            //     if TempDeferralHeader."Amount to Defer" <> 0 then begin
+            //         DeferralUtilities.FilterDeferralLines(
+            //           TempDeferralLine, DeferralUtilities.GetPurchDeferralDocType, '', '',
+            //           PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.");
+            //         // Remainder\Initial deferral pair
+            //         DeferralPostBuffer.PreparePurch(PurchLine, GenJnlLineDocNo);
+            //         DeferralPostBuffer."Posting Date" := PurchHeader."Posting Date";
+            //         DeferralPostBuffer.Description := PurchHeader."Posting Description";
+            //         DeferralPostBuffer."Period Description" := DeferralTemplate."Period Description";
+            //         DeferralPostBuffer."Deferral Line No." := InvDefLineNo;
+            //         DeferralPostBuffer.PrepareInitialPair(
+            //           InvoicePostBuffer, RemainAmtToDefer, RemainAmtToDeferACY, PurchAccount, DeferralAccount);
+            //         DeferralPostBuffer.Update(DeferralPostBuffer, InvoicePostBuffer);
+            //         if (RemainAmtToDefer <> 0) or (RemainAmtToDeferACY <> 0) then begin
+            //             DeferralPostBuffer.PrepareRemainderPurchase(
+            //               PurchLine, RemainAmtToDefer, RemainAmtToDeferACY, PurchAccount, DeferralAccount, InvDefLineNo);
+            //             DeferralPostBuffer.Update(DeferralPostBuffer, InvoicePostBuffer);
+            //         end;
 
-                    // Add the deferral lines for each period to the deferral posting buffer merging when they are the same
-                    if TempDeferralLine.FindSet then
-                        repeat
-                            if (TempDeferralLine."Amount (LCY)" <> 0) or (TempDeferralLine.Amount <> 0) then begin
-                                DeferralPostBuffer.PreparePurch(PurchLine, GenJnlLineDocNo);
-                                DeferralPostBuffer.InitFromDeferralLine(TempDeferralLine);
-                                if PurchLine.IsCreditDocType then
-                                    DeferralPostBuffer.ReverseAmounts;
-                                DeferralPostBuffer."G/L Account" := PurchAccount;
-                                DeferralPostBuffer."Deferral Account" := DeferralAccount;
-                                DeferralPostBuffer."Period Description" := DeferralTemplate."Period Description";
-                                DeferralPostBuffer."Deferral Line No." := InvDefLineNo;
-                                DeferralPostBuffer.Update(DeferralPostBuffer, InvoicePostBuffer);
-                            end else
-                                Error(ZeroDeferralAmtErr, PurchLine."No.", PurchLine."Deferral Code");
+            //         // Add the deferral lines for each period to the deferral posting buffer merging when they are the same
+            //         if TempDeferralLine.FindSet then
+            //             repeat
+            //                 if (TempDeferralLine."Amount (LCY)" <> 0) or (TempDeferralLine.Amount <> 0) then begin
+            //                     DeferralPostBuffer.PreparePurch(PurchLine, GenJnlLineDocNo);
+            //                     DeferralPostBuffer.InitFromDeferralLine(TempDeferralLine);
+            //                     if PurchLine.IsCreditDocType then
+            //                         DeferralPostBuffer.ReverseAmounts;
+            //                     DeferralPostBuffer."G/L Account" := PurchAccount;
+            //                     DeferralPostBuffer."Deferral Account" := DeferralAccount;
+            //                     DeferralPostBuffer."Period Description" := DeferralTemplate."Period Description";
+            //                     DeferralPostBuffer."Deferral Line No." := InvDefLineNo;
+            //                     DeferralPostBuffer.Update(DeferralPostBuffer, InvoicePostBuffer);
+            //                 end else
+            //                     Error(ZeroDeferralAmtErr, PurchLine."No.", PurchLine."Deferral Code");
 
-                        until TempDeferralLine.Next = 0
+            //             until TempDeferralLine.Next = 0
 
-                    else
-                        Error(NoDeferralScheduleErr, PurchLine."No.", PurchLine."Deferral Code");
-                end else
-                    Error(NoDeferralScheduleErr, PurchLine."No.", PurchLine."Deferral Code")
+            //         else
+            //             Error(NoDeferralScheduleErr, PurchLine."No.", PurchLine."Deferral Code");
+                // end else
+                //     Error(NoDeferralScheduleErr, PurchLine."No.", PurchLine."Deferral Code")
             end else
                 Error(NoDeferralScheduleErr, PurchLine."No.", PurchLine."Deferral Code")
         end;
-    end;
+    // end;
 
     local procedure RoundDeferralsForArchive(PurchHeader: Record "Purchase Header"; var PurchLine: Record "Purchase Line")
     var
@@ -6060,12 +6061,12 @@ codeunit 50126 INHPurchPost
             DeferralTemplate.TestField("Deferral Account");
             DeferralAccount := DeferralTemplate."Deferral Account";
 
-            if TempDeferralHeader.Get(DeferralUtilities.GetPurchDeferralDocType, '', '',
-                 PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.")
-            then begin
-                AmtToDeferACY := TempDeferralHeader."Amount to Defer";
-                AmtToDefer := TempDeferralHeader."Amount to Defer (LCY)";
-            end;
+            // if TempDeferralHeader.Get(DeferralUtilities.GetPurchDeferralDocType, '', '',
+            //      PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.")
+            // then begin
+            //     AmtToDeferACY := TempDeferralHeader."Amount to Defer";
+            //     AmtToDefer := TempDeferralHeader."Amount to Defer (LCY)";
+            // end;
 
             if PurchLine.IsCreditDocType then begin
                 AmtToDefer := -AmtToDefer;
@@ -6155,8 +6156,8 @@ codeunit 50126 INHPurchPost
 
     local procedure ValidatePostingAndDocumentDate(var PurchaseHeader: Record "Purchase Header")
     var
-        BatchProcessingMgt: Codeunit "Batch Processing Mgt.";
-        BatchPostParameterTypes: Codeunit "Batch Post Parameter Types";
+        // BatchProcessingMgt: Codeunit "Batch Processing Mgt.";
+        // BatchPostParameterTypes: Codeunit "Batch Post Parameter Types";
         PostingDate: Date;
         ModifyHeader: Boolean;
         PostingDateExists: Boolean;
@@ -6165,13 +6166,13 @@ codeunit 50126 INHPurchPost
     begin
         OnBeforeValidatePostingAndDocumentDate(PurchaseHeader, SuppressCommit);
 
-        PostingDateExists :=
-          BatchProcessingMgt.GetParameterBoolean(
-            PurchaseHeader.RecordId, BatchPostParameterTypes.ReplacePostingDate, ReplacePostingDate) and
-          BatchProcessingMgt.GetParameterBoolean(
-            PurchaseHeader.RecordId, BatchPostParameterTypes.ReplaceDocumentDate, ReplaceDocumentDate) and
-          BatchProcessingMgt.GetParameterDate(
-            PurchaseHeader.RecordId, BatchPostParameterTypes.PostingDate, PostingDate);
+        // PostingDateExists :=
+        //   BatchProcessingMgt.GetParameterBoolean(
+        //     PurchaseHeader.RecordId, BatchPostParameterTypes.ReplacePostingDate, ReplacePostingDate) and
+        //   BatchProcessingMgt.GetParameterBoolean(
+        //     PurchaseHeader.RecordId, BatchPostParameterTypes.ReplaceDocumentDate, ReplaceDocumentDate) and
+        //   BatchProcessingMgt.GetParameterDate(
+        //     PurchaseHeader.RecordId, BatchPostParameterTypes.PostingDate, PostingDate);
 
         if PostingDateExists and (ReplacePostingDate or (PurchaseHeader."Posting Date" = 0D)) then begin
             PurchaseHeader."Posting Date" := PostingDate;
@@ -6302,7 +6303,7 @@ codeunit 50126 INHPurchPost
                 if GuiAllowed and not HideProgressWindow then
                     Window.Update(3, LineCount);
 
-                TempInvoicePostBuffer.ApplyRoundingForFinalPosting;
+                // TempInvoicePostBuffer.ApplyRoundingForFinalPosting;
                 case TempInvoicePostBuffer."VAT Calculation Type" of
                     TempInvoicePostBuffer."VAT Calculation Type"::"Sales Tax":
                         if TempInvoicePostBuffer."Use Tax" then begin
@@ -6325,7 +6326,7 @@ codeunit 50126 INHPurchPost
                 if (TempInvoicePostBuffer."Job No." <> '') and
                    (TempInvoicePostBuffer.Type = TempInvoicePostBuffer.Type::"G/L Account")
                 then
-                    JobPostLine.PostPurchaseGLAccounts(TempInvoicePostBuffer, GLEntryNo);
+                    ;//JobPostLine.PostPurchaseGLAccounts(TempInvoicePostBuffer, GLEntryNo);
 
             until TempInvoicePostBuffer.Next(-1) = 0;
 
@@ -6387,7 +6388,7 @@ codeunit 50126 INHPurchPost
         "+++LO_VAR_INHAUS+++": Boolean;
         LO_RE_PurchRcptHeader: Record "Purch. Rcpt. Header";
         LO_RE_PurchaseOrderHeader: Record "Purchase Header";
-        lo_cu_PurchLineMgt: Codeunit PurchaseLineMgt;
+        // lo_cu_PurchLineMgt: Codeunit PurchaseLineMgt;
     begin
         with PurchHeader do begin
             EndLoop := false;
@@ -6401,18 +6402,6 @@ codeunit 50126 INHPurchPost
                     end;
                 "Document Type"::Invoice:
                     begin
-                        //START Axx° ---------------------------------
-                        //            PurchRcptLine.SETRANGE("Document No.",PurchLine."Receipt No.");
-                        //            PurchRcptLine.SETRANGE("Line No.",PurchLine."Receipt Line No.");
-                        //TODO: Bei BVO müssten die Felder "Receipt No." und "Receipt Line No." auch gefüllt werden, dann wäre Anpassung hier nicht nötig
-                        if (PurchLine.IC_Typ = PurchLine.IC_Typ::BVO) then begin
-                            PurchRcptLine.SetRange(IC_Lieferschein, PurchLine.IC_Lieferschein);
-                            PurchRcptLine.SetRange(IC_LieferZeile, PurchLine.IC_LieferZeile);
-                        end else begin
-                            PurchRcptLine.SetRange("Document No.", PurchLine."Receipt No.");
-                            PurchRcptLine.SetRange("Line No.", PurchLine."Receipt Line No.");
-                        end;
-                        //STOP  Axx° ---------------------------------
                     end;
             end;
 
@@ -6432,8 +6421,8 @@ codeunit 50126 INHPurchPost
                     PurchRcptLine.TestField("Gen. Bus. Posting Group", PurchLine."Gen. Bus. Posting Group");
                     //START B05° ---------------------------------
                     if (LO_RE_PurchRcptHeader.Get(PurchRcptLine."Document No.")) and
-                        (LO_RE_PurchaseOrderHeader.Get(LO_RE_PurchaseOrderHeader."Document Type"::Order, LO_RE_PurchRcptHeader."Order No.")) and
-                        lo_cu_PurchLineMgt.FNK_Check4ProdPostGrpChangeEK(LO_RE_PurchaseOrderHeader)
+                        (LO_RE_PurchaseOrderHeader.Get(LO_RE_PurchaseOrderHeader."Document Type"::Order, LO_RE_PurchRcptHeader."Order No.")) 
+                        // lo_cu_PurchLineMgt.FNK_Check4ProdPostGrpChangeEK(LO_RE_PurchaseOrderHeader)
                     then begin
                         PurchRcptLine."Gen. Prod. Posting Group" := PurchLine."Gen. Prod. Posting Group";
                         PurchRcptLine."VAT Prod. Posting Group" := PurchLine."VAT Prod. Posting Group";
@@ -6661,7 +6650,7 @@ codeunit 50126 INHPurchPost
         SalesOrderLine: Record "Sales Line";
         TempPurchLine: Record "Purchase Line" temporary;
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_re_InitTable: Record "Init-Tabelle";
+        lo_re_InitTable: Record "INHInitTable";
     begin
         ResetTempLines(TempPurchLine);
         with TempPurchLine do begin
@@ -6669,22 +6658,6 @@ codeunit 50126 INHPurchPost
             SetFilter(Type, '<>%1', Type::" ");
             if FindSet then
                 repeat
-                    //START Axx° ---------------------------------
-                    //      PurchRcptLine.GET("Receipt No.","Receipt Line No.");
-                    if (IC_Typ = IC_Typ::BVO) then begin
-                        PurchRcptLine.Reset;
-                        PurchRcptLine.SetRange(IC_Lieferschein, IC_Lieferschein);
-                        PurchRcptLine.SetRange(IC_LieferZeile, IC_LieferZeile);
-                        PurchRcptLine.FindFirst;
-                    end else begin
-                        PurchRcptLine.Get("Receipt No.", "Receipt Line No.");
-                    end;
-                    lo_re_InitTable.Get(CompanyName);
-                    if (("Line No." = "Duty Line") and (lo_re_InitTable.IC_Vendor = "Buy-from Vendor No."))
-                       or
-                       ("Duty Line" = 0)
-                    then begin
-                        //STOP  Axx° ---------------------------------
                         PurchOrderLine.Get(
                           PurchOrderLine."Document Type"::Order,
                           PurchRcptLine."Order No.", PurchRcptLine."Order Line No.");
@@ -6703,7 +6676,6 @@ codeunit 50126 INHPurchPost
                             then
                                 Error(CannotPostBeforeAssosSalesOrderErr, PurchOrderLine."Sales Order No.");
                         end;
-                    end;   //Axx°
                     PurchOrderLine.InitQtyToInvoice;
                     if PurchOrderLine."Prepayment %" <> 0 then begin
                         PurchOrderLine."Prepmt Amt Deducted" += "Prepmt Amt to Deduct";
@@ -6801,20 +6773,20 @@ codeunit 50126 INHPurchPost
         if DeferralTemplate.Get(PurchLine."Deferral Code") then
             DeferralAccount := DeferralTemplate."Deferral Account";
 
-        if TempDeferralHeader.Get(
-             DeferralUtilities.GetPurchDeferralDocType, '', '', PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.")
-        then begin
-            PostedDeferralHeader.InitFromDeferralHeader(TempDeferralHeader, '', '', NewDocumentType,
-              NewDocumentNo, NewLineNo, DeferralAccount, PurchLine."Buy-from Vendor No.", PostingDate);
-            DeferralUtilities.FilterDeferralLines(
-              TempDeferralLine, DeferralUtilities.GetPurchDeferralDocType, '', '',
-              PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.");
-            if TempDeferralLine.FindSet then
-                repeat
-                    PostedDeferralLine.InitFromDeferralLine(
-                      TempDeferralLine, '', '', NewDocumentType, NewDocumentNo, NewLineNo, DeferralAccount);
-                until TempDeferralLine.Next = 0;
-        end;
+        // if TempDeferralHeader.Get(
+        //      DeferralUtilities.GetPurchDeferralDocType, '', '', PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.")
+        // then begin
+        //     PostedDeferralHeader.InitFromDeferralHeader(TempDeferralHeader, '', '', NewDocumentType,
+        //       NewDocumentNo, NewLineNo, DeferralAccount, PurchLine."Buy-from Vendor No.", PostingDate);
+        //     DeferralUtilities.FilterDeferralLines(
+        //       TempDeferralLine, DeferralUtilities.GetPurchDeferralDocType, '', '',
+        //       PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.");
+        //     if TempDeferralLine.FindSet then
+        //         repeat
+        //             PostedDeferralLine.InitFromDeferralLine(
+        //               TempDeferralLine, '', '', NewDocumentType, NewDocumentNo, NewLineNo, DeferralAccount);
+        //         until TempDeferralLine.Next = 0;
+        // end;
 
         OnAfterCreatePostedDeferralScheduleFromPurchDoc(PurchLine, PostedDeferralHeader);
     end;
@@ -6836,8 +6808,10 @@ codeunit 50126 INHPurchPost
         else
             UseDate := PurchHeader."Posting Date";
 
+        // if DeferralHeader.Get(
+        //      DeferralUtilities.GetPurchDeferralDocType, '', '', PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.")
         if DeferralHeader.Get(
-             DeferralUtilities.GetPurchDeferralDocType, '', '', PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.")
+             0, '', '', PurchLine."Document Type", PurchLine."Document No.", PurchLine."Line No.")
         then begin
             TempDeferralHeader := DeferralHeader;
             if PurchLine.Quantity <> PurchLine."Qty. to Invoice" then

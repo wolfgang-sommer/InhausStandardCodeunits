@@ -19,7 +19,7 @@ codeunit 50125 INHPurchGetReceipt
 
     trigger OnRun()
     begin
-        PurchHeader.Get("Document Type", "Document No.");
+        PurchHeader.Get(Rec."Document Type", Rec."Document No.");
         PurchHeader.TestField("Document Type", PurchHeader."Document Type"::Invoice);
         PurchHeader.TestField(Status, PurchHeader.Status::Open);
 
@@ -45,7 +45,6 @@ codeunit 50125 INHPurchGetReceipt
         PurchRcptLine: Record "Purch. Rcpt. Line";
         UOMMgt: Codeunit "Unit of Measure Management";
         GetReceipts: Page "Get Receipt Lines";
-        "+++TE_INHAUS+++": ;
         TextDirectShptInfo: Label 'Achtung, bei diesem Lieferschein handelt es sich um eine Direktlieferung nach %1. Bitte überprüfen Sie die MwSt. der Positionen.';
         "+++VAR_INHAUS+++": Boolean;
         co_LastReceiptNo: Code[20];
@@ -54,10 +53,9 @@ codeunit 50125 INHPurchGetReceipt
     procedure CreateInvLines(var PurchRcptLine2: Record "Purch. Rcpt. Line")
     var
         TransferLine: Boolean;
-        "+++LO_VAR_INHAUS+++": Boolean;
         lo_re_CountryRegion: Record "Country/Region";
         lo_re_PurchHdr: Record "Purchase Header";
-        lo_cu_PurchLineMgt: Codeunit PurchaseLineMgt;
+        // lo_cu_PurchLineMgt: Codeunit INHPurchaseLineMgt;
         lo_co_Country: Code[10];
         lo_bo_ForeignShipment: Boolean;
         PrepmtAmtToDeductRounding: Decimal;
@@ -80,12 +78,12 @@ codeunit 50125 INHPurchGetReceipt
                         PurchRcptHeader.Get("Document No.");
                         TransferLine := true;
                         //START B05° ---------------------------------
-                        if (lo_re_PurchHdr.Get(lo_re_PurchHdr."Document Type"::Order, PurchRcptHeader."Order No.")) and
-                            lo_cu_PurchLineMgt.FNK_Check4ProdPostGrpChangeEK(lo_re_PurchHdr)
-                        then begin
-                            lo_bo_ForeignShipment := true;
-                            lo_co_Country := lo_re_PurchHdr."Ship-to Country/Region Code";
-                        end;
+                        // if (lo_re_PurchHdr.Get(lo_re_PurchHdr."Document Type"::Order, PurchRcptHeader."Order No.")) and
+                        //     lo_cu_PurchLineMgt.FNK_Check4ProdPostGrpChangeEK(lo_re_PurchHdr)
+                        // then begin
+                        //     lo_bo_ForeignShipment := true;
+                        //     lo_co_Country := lo_re_PurchHdr."Ship-to Country/Region Code";
+                        // end;
                         //STOP  B05° ---------------------------------
                         if PurchRcptHeader."Currency Code" <> PurchHeader."Currency Code" then begin
                             Message(
@@ -109,12 +107,12 @@ codeunit 50125 INHPurchGetReceipt
                         PurchRcptLine := PurchRcptLine2;
                         PurchRcptLine.TestField("VAT Bus. Posting Group", PurchHeader."VAT Bus. Posting Group");
                         //START C21° ---------------------------------
-                        if co_LastReceiptNo <> '' then begin
-                            PurchRcptLine.fnk_SetLastReceiptNo(co_LastReceiptNo);
-                        end;
-                        if co_LastVendorShptNo <> '' then begin
-                            PurchRcptLine.fnk_SetLastVendorShptNo(co_LastVendorShptNo);
-                        end;
+                        // if co_LastReceiptNo <> '' then begin
+                        //     PurchRcptLine.fnk_SetLastReceiptNo(co_LastReceiptNo);
+                        // end;
+                        // if co_LastVendorShptNo <> '' then begin
+                        //     PurchRcptLine.fnk_SetLastVendorShptNo(co_LastVendorShptNo);
+                        // end;
                         //STOP  C21° ---------------------------------
                         PurchRcptLine.InsertInvLineFromRcptLine(PurchLine);
                         CalcUpdatePrepmtAmtToDeductRounding(PurchRcptLine, PurchLine, PrepmtAmtToDeductRounding);

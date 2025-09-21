@@ -896,7 +896,7 @@ codeunit 50129 INHPurchPriceCalcMgt
 
     local procedure fnk_CheckIfIC(par_co_Vend: Code[20])
     var
-        lo_re_InitTable: Record "Init-Tabelle";
+        lo_re_InitTable: Record "INHInitTable";
     begin
         //Axx°
         Clear(IC_Beleg);

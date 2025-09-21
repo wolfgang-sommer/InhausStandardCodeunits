@@ -340,7 +340,7 @@ codeunit 50117 INHInventoryAdjustment
                     CalcCostPerUnit(OutbndValueEntry, OutbndCostElementBuf, OutbndItemLedgEntry.Quantity);
 
                     if not "Expected Cost" then begin
-                        OldCostElementBuf.Retrieve(0, 0);
+                        // OldCostElementBuf.Retrieve(0, 0);
                         "Invoiced Quantity" := OldCostElementBuf."Invoiced Quantity";
                         "Valued Quantity" := OldCostElementBuf."Invoiced Quantity";
                     end;
@@ -350,12 +350,12 @@ codeunit 50117 INHInventoryAdjustment
                       OutbndValueEntry, OutbndItemLedgEntry.Quantity);
 
                     if "Expected Cost" then begin
-                        OldCostElementBuf.Retrieve(OldCostElementBuf.Type::Total, OldCostElementBuf."Variance Type"::" ");
+                        // OldCostElementBuf.Retrieve(OldCostElementBuf.Type::Total, OldCostElementBuf."Variance Type"::" ");
                         AdjustedCostElementBuf."Actual Cost" := AdjustedCostElementBuf."Actual Cost" - OldCostElementBuf."Expected Cost";
                         AdjustedCostElementBuf."Actual Cost (ACY)" :=
                           AdjustedCostElementBuf."Actual Cost (ACY)" - OldCostElementBuf."Expected Cost (ACY)";
                     end else begin
-                        OldCostElementBuf.Retrieve("Entry Type"::"Direct Cost", 0);
+                        // OldCostElementBuf.Retrieve("Entry Type"::"Direct Cost", 0);
                         AdjustedCostElementBuf."Actual Cost" := AdjustedCostElementBuf."Actual Cost" - OldCostElementBuf."Actual Cost";
                         AdjustedCostElementBuf."Actual Cost (ACY)" :=
                           AdjustedCostElementBuf."Actual Cost (ACY)" - OldCostElementBuf."Actual Cost (ACY)";
@@ -445,7 +445,7 @@ codeunit 50117 INHInventoryAdjustment
                 then
                     "Inbound Completely Invoiced" := false;
 
-                AdjustedCostElementBuf.Retrieve(Type::"Direct Cost", "Variance Type"::" ");
+                // AdjustedCostElementBuf.Retrieve(Type::"Direct Cost", "Variance Type"::" ");
                 "Actual Cost" := "Actual Cost" + AdjustedCostElementBuf."Actual Cost";
                 "Actual Cost (ACY)" := "Actual Cost (ACY)" + AdjustedCostElementBuf."Actual Cost (ACY)";
                 "Remaining Quantity" := "Remaining Quantity" - OutbndItemApplnEntry.Quantity;
@@ -464,7 +464,7 @@ codeunit 50117 INHInventoryAdjustment
     begin
         ShareOfTotalCost := OutbndValueEntry."Valued Quantity" / ItemLedgEntryQty;
         with OutbndCostElementBuf do begin
-            NewCostElementBuf.Retrieve(Type::"Direct Cost", 0);
+            // NewCostElementBuf.Retrieve(Type::"Direct Cost", 0);
             "Actual Cost" := "Actual Cost" + OutbndValueEntry."Cost per Unit" * "Remaining Quantity";
             "Actual Cost (ACY)" := "Actual Cost (ACY)" + OutbndValueEntry."Cost per Unit (ACY)" * "Remaining Quantity";
 
@@ -512,8 +512,8 @@ codeunit 50117 INHInventoryAdjustment
         NewAdjustedCostACY: Decimal;
     begin
         with CostElementBuf do begin
-            Retrieve(EntryType, 0);
-            AdjustedCostElementBuf.Retrieve(EntryType, 0);
+            // Retrieve(EntryType, 0);
+            // AdjustedCostElementBuf.Retrieve(EntryType, 0);
             NewAdjustedCost := AdjustedCostElementBuf."Actual Cost" - "Actual Cost";
             NewAdjustedCostACY := AdjustedCostElementBuf."Actual Cost (ACY)" - "Actual Cost (ACY)";
         end;
@@ -643,7 +643,7 @@ codeunit 50117 INHInventoryAdjustment
                     CalcInbndDocOldCost(InbndValueEntry, DocCostElementBuf);
 
                     if not InbndValueEntry."Expected Cost" then begin
-                        DocCostElementBuf.Retrieve(0, 0);
+                        // DocCostElementBuf.Retrieve(0, 0);
                         InbndValueEntry."Valued Quantity" := DocCostElementBuf."Invoiced Quantity";
                         InbndValueEntry."Invoiced Quantity" := DocCostElementBuf."Invoiced Quantity";
                     end;
@@ -726,16 +726,16 @@ codeunit 50117 INHInventoryAdjustment
                 then begin
                     if TempInvtAdjmtBuf.Get(InbndValueEntry."Entry No.") then
                         InbndValueEntry.AddCost(TempInvtAdjmtBuf);
-                    if InbndValueEntry."Expected Cost" then
-                        AddExpectedCost(0, 0, InbndValueEntry."Cost Amount (Expected)", InbndValueEntry."Cost Amount (Expected) (ACY)")
-                    else begin
-                        AddActualCost(0, 0, InbndValueEntry."Cost Amount (Actual)", InbndValueEntry."Cost Amount (Actual) (ACY)");
-                        if InbndValueEntry."Invoiced Quantity" <> 0 then begin
-                            "Invoiced Quantity" := "Invoiced Quantity" + InbndValueEntry."Invoiced Quantity";
-                            if not Modify then
-                                Insert;
-                        end;
-                    end;
+                    // if InbndValueEntry."Expected Cost" then
+                    //     AddExpectedCost(0, 0, InbndValueEntry."Cost Amount (Expected)", InbndValueEntry."Cost Amount (Expected) (ACY)")
+                    // else begin
+                    //     AddActualCost(0, 0, InbndValueEntry."Cost Amount (Actual)", InbndValueEntry."Cost Amount (Actual) (ACY)");
+                    //     if InbndValueEntry."Invoiced Quantity" <> 0 then begin
+                    //         "Invoiced Quantity" := "Invoiced Quantity" + InbndValueEntry."Invoiced Quantity";
+                    //         if not Modify then
+                    //             Insert;
+                    //     end;
+                    // end;
                 end;
             until InbndValueEntry.Next = 0;
     end;
@@ -899,8 +899,8 @@ codeunit 50117 INHInventoryAdjustment
             repeat
                 if TempInvtAdjmtBuf.Get("Entry No.") then
                     AddCost(TempInvtAdjmtBuf);
-                CostElementBuf.AddExpectedCost(
-                  CostElementBuf.Type::Total, 0, "Cost Amount (Expected)", "Cost Amount (Expected) (ACY)");
+                // CostElementBuf.AddExpectedCost(
+                //   CostElementBuf.Type::Total, 0, "Cost Amount (Expected)", "Cost Amount (Expected) (ACY)");
                 if not "Expected Cost" then
                     case true of
                         ("Entry Type" <= "Entry Type"::Revaluation) or not ExactCostReversing:

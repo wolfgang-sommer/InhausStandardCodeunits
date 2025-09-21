@@ -133,7 +133,7 @@ codeunit 50160 INHWhseSalesRelease
         "+++LO_VAR_INHAUS+++": Boolean;
         lo_re_Cust: Record Customer;
         lo_re_WhseRqst: Record "Warehouse Request";
-        lo_cu_LogisticsMgt: Codeunit LogisticsMgt;
+        lo_cu_LogisticsMgt: Codeunit INHLogisticsMgt;
         lo_cu_PrePaymentPlanMgmt: Codeunit "PrePayment Plan Mgmt.";
         lo_da_KommDatum: Date;
     begin

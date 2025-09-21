@@ -18,7 +18,6 @@ codeunit 50115 INHGetSourceDocInbound
 
     var
         GetSourceDocuments: Report "Get Source Documents";
-        "+++TE_INHAUS+++": ;
         TextBVO: Label 'BVO Wareneingänge bitte über "Lieferschein holen" erstellen.';
 
     local procedure CreateWhseReceiptHeaderFromWhseRequest(var WarehouseRequest: Record "Warehouse Request"): Boolean
@@ -82,14 +81,6 @@ codeunit 50115 INHGetSourceDocInbound
             exit;
         SourceDocSelection.GetResult(WhseRqst);
 
-        //START A08° ---------------------------------
-        SourceDocSelection.GetRecord(lo_re_WhseRqst2);
-        if lo_re_WhseRqst2."Source Type" = DATABASE::"Purchase Line" then
-            if lo_re_PurchHdr.Get(lo_re_WhseRqst2."Source Subtype", lo_re_WhseRqst2."Source No.") then
-                if lo_re_PurchHdr.IC_Typ = lo_re_PurchHdr.IC_Typ::BVO then
-                    Error(TextBVO);
-        //STOP  A08° ---------------------------------
-
         GetSourceDocuments.SetOneCreatedReceiptHeader(WhseReceiptHeader);
         GetSourceDocuments.UseRequestPage(false);
         GetSourceDocuments.SetTableView(WhseRqst);
@@ -117,11 +108,6 @@ codeunit 50115 INHGetSourceDocInbound
     procedure CreateFromPurchOrder(PurchHeader: Record "Purchase Header")
     begin
         OnBeforeCreateFromPurchOrder(PurchHeader);
-        //START A08° ---------------------------------
-        if PurchHeader.IC_Typ = PurchHeader.IC_Typ::BVO then begin
-            Error(TextBVO);
-        end;
-        //STOP  A08° ---------------------------------
         ShowDialog(CreateFromPurchOrderHideDialog(PurchHeader));
     end;
 

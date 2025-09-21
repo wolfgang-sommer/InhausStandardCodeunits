@@ -65,7 +65,7 @@ codeunit 50156 INHWhsePostReceipt
     var
         WhseManagement: Codeunit "Whse. Management";
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_LogisticsMgt: Codeunit LogisticsMgt;
+        lo_cu_LogisticsMgt: Codeunit INHLogisticsMgt;
         lo_cu_OverallVariableMgt: Codeunit OverallVariableMgt;
         lo_bo_IsAutoProcess: Boolean;
     begin

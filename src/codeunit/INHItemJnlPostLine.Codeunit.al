@@ -137,7 +137,6 @@ codeunit 50121 INHItemJnlPostLine
         Text033: Label 'Quantity must be -1, 0 or 1 when Serial No. is stated.';
         SkipApplicationCheck: Boolean;
         CalledFromApplicationWorksheet: Boolean;
-        "+++TE_INHAUS+++": ;
         TextLotNoError: Label 'Fehler bei Chargennummer %1, Belegnr. %2 bei Artikel %3 (cu22-INDEX09)';
 
     procedure RunWithCheck(var ItemJnlLine2: Record "Item Journal Line"): Boolean
@@ -145,7 +144,7 @@ codeunit 50121 INHItemJnlPostLine
         TrackingSpecExists: Boolean;
         IsHandled: Boolean;
         "+++LO_VAR_INHAUS+++": Boolean;
-        cu_LogisticsMgt: Codeunit LogisticsMgt;
+        cu_LogisticsMgt: Codeunit INHLogisticsMgt;
     begin
         IsHandled := false;
         OnBeforeRunWithCheck(
@@ -154,7 +153,7 @@ codeunit 50121 INHItemJnlPostLine
         if IsHandled then
             exit;
 
-        cu_LogisticsMgt.fnk_Cu22_OnBeforeRunWithCheck(ItemJnlLine2);   //C27°
+        // cu_LogisticsMgt.OnBeforeRunWithCheck(ItemJnlLine2);   //C27°
         PrepareItem(ItemJnlLine2);
         TrackingSpecExists := ItemTrackingMgt.RetrieveItemTracking(ItemJnlLine2, TempTrackingSpecification);
         exit(PostSplitJnlLine(ItemJnlLine2, TrackingSpecExists));
@@ -365,7 +364,7 @@ codeunit 50121 INHItemJnlPostLine
                       ItemTrackingMgt.RetrieveConsumpItemTracking(ItemJnlLine, TempHandlingSpecification);
 
                 if UseItemTrackingApplication then begin
-                    TempHandlingSpecification.SetTrackingFilter(ItemJnlLine."Serial No.", ItemJnlLine."Lot No.");
+                    // TempHandlingSpecification.SetTrackingFilter(ItemJnlLine."Serial No.", ItemJnlLine."Lot No.");
                     LastLoop := false;
                 end else
                     if ReservationExists(ItemJnlLine) then begin
@@ -588,7 +587,7 @@ codeunit 50121 INHItemJnlPostLine
                 if PostWhseJnlLine then begin
                     GetLocation("Location Code");
                     if Location."Bin Mandatory" and (not CalledFromInvtPutawayPick) then begin
-                        WMSMgmt.CreateWhseJnlLineFromOutputJnl(ItemJnlLine, WhseJnlLine);
+                        // WMSMgmt.CreateWhseJnlLineFromOutputJnl(ItemJnlLine, WhseJnlLine);
                         WMSMgmt.CheckWhseJnlLine(WhseJnlLine, 2, 0, false);
                     end;
                 end;
@@ -713,7 +712,7 @@ codeunit 50121 INHItemJnlPostLine
             if "Value Entry Type" <> "Value Entry Type"::Revaluation then begin
                 GetLocation("Location Code");
                 if Location."Bin Mandatory" and (not CalledFromInvtPutawayPick) then begin
-                    WMSMgmt.CreateWhseJnlLineFromConsumJnl(ItemJnlLine, WhseJnlLine);
+                    // WMSMgmt.CreateWhseJnlLineFromConsumJnl(ItemJnlLine, WhseJnlLine);
                     WMSMgmt.CheckWhseJnlLine(WhseJnlLine, 3, 0, false);
                     PostWhseJnlLine := true;
                 end;
@@ -779,7 +778,7 @@ codeunit 50121 INHItemJnlPostLine
                 CalcCapLedgerEntriesSetupRunTime(ItemJnlLine, PrevSetupTime, PrevRunTime);
 
                 if PostedSetupTime <> 0 then begin
-                    ProdOrderCapNeed.SetRange("Time Type", ProdOrderCapNeed."Time Type"::Setup);
+                    // ProdOrderCapNeed.SetRange("Time Type", ProdOrderCapNeed."Time Type"::Setup);
                     PostedSetupTime += PrevSetupTime;
                     if ProdOrderCapNeed.FindSet then
                         repeat
@@ -791,7 +790,7 @@ codeunit 50121 INHItemJnlPostLine
                 end;
 
                 if PostedRunTime <> 0 then begin
-                    ProdOrderCapNeed.SetRange("Time Type", ProdOrderCapNeed."Time Type"::Run);
+                    // ProdOrderCapNeed.SetRange("Time Type", ProdOrderCapNeed."Time Type"::Run);
                     PostedRunTime += PrevRunTime;
                     if ProdOrderCapNeed.FindSet then
                         repeat
@@ -844,7 +843,7 @@ codeunit 50121 INHItemJnlPostLine
             Modify;
 
             if ReTrack then begin
-                ReservMgt.SetProdOrderLine(ProdOrderLine);
+                // ReservMgt.SetProdOrderLine(ProdOrderLine);
                 ReservMgt.ClearSurplus;
                 ReservMgt.AutoTrack("Remaining Qty. (Base)");
             end;
@@ -1473,9 +1472,9 @@ codeunit 50121 INHItemJnlPostLine
             InventoryPeriod.ShowError(ItemLedgEntry."Posting Date");
 
         ItemTrackingCode.Code := Item."Item Tracking Code";
-        ItemTrackingMgt.GetItemTrackingSettings(
-          ItemTrackingCode, ItemJnlLine."Entry Type", ItemJnlLine.Signed(ItemJnlLine."Quantity (Base)") > 0,
-          SNRequired, LotRequired, SNInfoRequired, LotInfoRequired);
+        // ItemTrackingMgt.GetItemTrackingSettings(
+        //   ItemTrackingCode, ItemJnlLine."Entry Type", ItemJnlLine.Signed(ItemJnlLine."Quantity (Base)") > 0,
+        //   SNRequired, LotRequired, SNInfoRequired, LotInfoRequired);
 
         TotalAppliedQty := 0;
         CostApplication := false;
@@ -1591,8 +1590,7 @@ codeunit 50121 INHItemJnlPostLine
         StartApplication: Boolean;
         UseReservationApplication: Boolean;
         Handled: Boolean;
-        "+++LO_VAR_INHAUS+++": Boolean;
-        lo_re_ILEArchive: Record "Item Ledger Entry Archive";
+        // lo_re_ILEArchive: Record INHItemLedgerEntryArchive;
         lo_bo_IsILEArchive: Boolean;
     begin
         OnBeforeApplyItemLedgEntry(ItemLedgEntry, OldItemLedgEntry, ValueEntry, CausedByTransfer, Handled);
@@ -1627,7 +1625,7 @@ codeunit 50121 INHItemJnlPostLine
                       "Source ID", "Source Ref. No.", "Source Type", "Source Subtype",
                       "Source Batch Name", "Source Prod. Order Line", "Reservation Status");
                     ReservEntry.SetRange("Reservation Status", ReservEntry."Reservation Status"::Reservation);
-                    ReserveItemJnlLine.FilterReservFor(ReservEntry, ItemJnlLine);
+                    // ReserveItemJnlLine.FilterReservFor(ReservEntry, ItemJnlLine);
                 end;
 
                 UseReservationApplication := ReservEntry.FindFirst;
@@ -1673,14 +1671,14 @@ codeunit 50121 INHItemJnlPostLine
                         //OldItemLedgEntry.GET(ItemLedgEntry."Applies-to Entry");
                         Clear(lo_bo_IsILEArchive);
                         if not OldItemLedgEntry.Get(ItemLedgEntry."Applies-to Entry") then begin
-                            if lo_re_ILEArchive.Get(ItemLedgEntry."Applies-to Entry")
-                               and (ItemLedgEntry."Document Type" <> ItemLedgEntry."Document Type"::"Purchase Return Shipment")
-                            then begin
-                                OldItemLedgEntry.TransferFields(lo_re_ILEArchive);
-                                lo_bo_IsILEArchive := true;
-                            end else begin
-                                OldItemLedgEntry.Get(ItemLedgEntry."Applies-to Entry");
-                            end;
+                            // if lo_re_ILEArchive.Get(ItemLedgEntry."Applies-to Entry")
+                            //    and (ItemLedgEntry."Document Type" <> ItemLedgEntry."Document Type"::"Purchase Return Shipment")
+                            // then begin
+                            //     OldItemLedgEntry.TransferFields(lo_re_ILEArchive);
+                            //     lo_bo_IsILEArchive := true;
+                            // end else begin
+                            OldItemLedgEntry.Get(ItemLedgEntry."Applies-to Entry");
+                            // end;
                         end;
                         //STOP  C24° ---------------------------------
                         TestFirstApplyItemLedgEntry(OldItemLedgEntry, ItemLedgEntry);
@@ -2029,7 +2027,7 @@ codeunit 50121 INHItemJnlPostLine
             ItemLedgEntry."Order Line No." := "Order Line No.";
             ItemLedgEntry."External Document No." := "External Document No.";
             ItemLedgEntry.Description := Description;
-            ItemLedgEntry."Description 2" := "Description 2";   //A70°
+            ItemLedgEntry.INHDescription2 := "INHDescription 2";   //A70°
             ItemLedgEntry."Location Code" := "Location Code";
             ItemLedgEntry."Applies-to Entry" := "Applies-to Entry";
             ItemLedgEntry."Source Type" := "Source Type";
@@ -2056,7 +2054,7 @@ codeunit 50121 INHItemJnlPostLine
             ItemLedgEntry."Qty. per Unit of Measure" := "Qty. per Unit of Measure";
             ItemLedgEntry."Derived from Blanket Order" := "Derived from Blanket Order";
 
-            ItemLedgEntry."Cross-Reference No." := "Cross-Reference No.";
+            // ItemLedgEntry."Cross-Reference No." := "Cross-Reference No.";
             ItemLedgEntry."Originally Ordered No." := "Originally Ordered No.";
             ItemLedgEntry."Originally Ordered Var. Code" := "Originally Ordered Var. Code";
             ItemLedgEntry."Out-of-Stock Substitution" := "Out-of-Stock Substitution";
@@ -2098,14 +2096,14 @@ codeunit 50121 INHItemJnlPostLine
                 ItemLedgEntry."Shipped Qty. Not Returned" := ItemLedgEntry.Quantity;
 
             //START A28° ---------------------------------
-            ItemLedgEntry."Auftragsnr." := "Belegnr. Inventur";
-            ItemLedgEntry."Auftragszeilennr." := "Belegzeilennr. Inventur";
-            ItemLedgEntry."gebucht am" := WorkDate;
-            ItemLedgEntry."gebucht um" := Time;
-            ItemLedgEntry."gebucht von" := CopyStr(UserId, 1, 10);
-            ItemLedgEntry."Kommisioniert von" := "Kommisioniert von";
-            ItemLedgEntry."Geliefert von" := "Geliefert von";
-            ItemLedgEntry.Ursachencode := "Reason Code";
+            // ItemLedgEntry."Auftragsnr." := "Belegnr. Inventur";
+            // ItemLedgEntry."Auftragszeilennr." := "Belegzeilennr. Inventur";
+            // ItemLedgEntry."gebucht am" := WorkDate;
+            // ItemLedgEntry."gebucht um" := Time;
+            // ItemLedgEntry."gebucht von" := CopyStr(UserId, 1, 10);
+            // ItemLedgEntry."Kommisioniert von" := "Kommisioniert von";
+            // ItemLedgEntry."Geliefert von" := "Geliefert von";
+            // ItemLedgEntry.Ursachencode := "Reason Code";
             //STOP  A28° ---------------------------------
 
         end;
@@ -3024,18 +3022,18 @@ codeunit 50121 INHItemJnlPostLine
     var
         OutboundItemLedgEntry: Record "Item Ledger Entry";
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_re_ILEArchive: Record "Item Ledger Entry Archive";
+    // lo_re_ILEArchive: Record "Item Ledger Entry Archive";
     begin
         with OutboundItemLedgEntry do begin
             //START C24° ---------------------------------
             //GET(OutboundItemEntryNo);
-            if not Get(OutboundItemEntryNo) then begin
-                if lo_re_ILEArchive.Get(OutboundItemEntryNo) then begin
-                    exit;
-                end else begin
-                    Get(OutboundItemEntryNo);
-                end;
-            end;
+            // if not Get(OutboundItemEntryNo) then begin
+            //     if lo_re_ILEArchive.Get(OutboundItemEntryNo) then begin
+            //         exit;
+            //     end else begin
+            //         Get(OutboundItemEntryNo);
+            //     end;
+            // end;
             //STOP  C24° ---------------------------------
             if Quantity > 0 then
                 FieldError(Quantity);
@@ -3200,7 +3198,7 @@ codeunit 50121 INHItemJnlPostLine
         OldValueEntry: Record "Value Entry";
         IsHandled: Boolean;
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_re_ValueEntryArch: Record "Value Entry Archive";
+    // lo_re_ValueEntryArch: Record "Value Entry Archive";
     begin
         with OldItemLedgEntry do begin
             OldValueEntry.SetCurrentKey("Item Ledger Entry No.", "Entry Type");
@@ -3215,18 +3213,18 @@ codeunit 50121 INHItemJnlPostLine
                 //START C24° ---------------------------------
                 //OldValueEntry.FINDLAST;
                 if not OldValueEntry.FindLast then begin
-                    lo_re_ValueEntryArch.SetRange("Item Ledger Entry No.", "Entry No.");
-                    lo_re_ValueEntryArch.SetRange("Entry Type", OldValueEntry."Entry Type"::Revaluation);
-                    if not lo_re_ValueEntryArch.FindLast then begin
-                        lo_re_ValueEntryArch.SetRange("Entry Type");
-                        if lo_re_ValueEntryArch.FindLast then begin
-                            OldValueEntry.TransferFields(lo_re_ValueEntryArch);
-                        end else begin
-                            OldValueEntry.FindLast;
-                        end;
-                    end else begin
-                        OldValueEntry.TransferFields(lo_re_ValueEntryArch);
-                    end;
+                    // lo_re_ValueEntryArch.SetRange("Item Ledger Entry No.", "Entry No.");
+                    // lo_re_ValueEntryArch.SetRange("Entry Type", OldValueEntry."Entry Type"::Revaluation);
+                    // if not lo_re_ValueEntryArch.FindLast then begin
+                    //     lo_re_ValueEntryArch.SetRange("Entry Type");
+                    //     if lo_re_ValueEntryArch.FindLast then begin
+                    //         OldValueEntry.TransferFields(lo_re_ValueEntryArch);
+                    //     end else begin
+                    //         OldValueEntry.FindLast;
+                    //     end;
+                    // end else begin
+                    //     OldValueEntry.TransferFields(lo_re_ValueEntryArch);
+                    // end;
                 end;
                 //STOP  C24° ---------------------------------
             end;
@@ -3361,7 +3359,7 @@ codeunit 50121 INHItemJnlPostLine
     var
         NegValueEntry: Record "Value Entry";
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_re_ValueEntryArchive: Record "Value Entry Archive";
+    // lo_re_ValueEntryArchive: Record "Value Entry Archive";
     begin
         with NegValueEntry do begin
             SetCurrentKey("Item Ledger Entry No.", "Entry Type");
@@ -3371,17 +3369,17 @@ codeunit 50121 INHItemJnlPostLine
                 SetRange("Entry Type");
                 //START C24° ---------------------------------
                 //FINDLAST;
-                if not FindLast then begin
-                    lo_re_ValueEntryArchive.SetCurrentKey("Item Ledger Entry No.", "Entry Type");
-                    lo_re_ValueEntryArchive.SetRange("Item Ledger Entry No.", ItemJnlLine."Applies-from Entry");
-                    lo_re_ValueEntryArchive.SetRange("Entry Type", "Entry Type"::Revaluation);
-                    if not FindLast then begin
-                        lo_re_ValueEntryArchive.SetRange("Entry Type");
-                        if not lo_re_ValueEntryArchive.FindLast then begin
-                            FindLast;
-                        end;
-                    end;
-                end;
+                // if not FindLast then begin
+                //     lo_re_ValueEntryArchive.SetCurrentKey("Item Ledger Entry No.", "Entry Type");
+                //     lo_re_ValueEntryArchive.SetRange("Item Ledger Entry No.", ItemJnlLine."Applies-from Entry");
+                //     lo_re_ValueEntryArchive.SetRange("Entry Type", "Entry Type"::Revaluation);
+                //     if not FindLast then begin
+                //         lo_re_ValueEntryArchive.SetRange("Entry Type");
+                //         if not lo_re_ValueEntryArchive.FindLast then begin
+                //             FindLast;
+                //         end;
+                //     end;
+                // end;
                 //STOP  C24° ---------------------------------
             end;
 
@@ -3675,13 +3673,13 @@ codeunit 50121 INHItemJnlPostLine
                 exit;
 
             // Ensure that Item Tracking is not left on the item ledger entry:
-            ReservMgt.SetItemLedgEntry(ItemLedgEntryRec);
+            // ReservMgt.SetItemLedgEntry(ItemLedgEntryRec);
             ReservMgt.SetItemTrackingHandling(1);
             ReservMgt.ClearSurplus;
             exit;
         end;
 
-        ReservMgt.SetItemLedgEntry(ItemLedgEntryRec);
+        // ReservMgt.SetItemLedgEntry(ItemLedgEntryRec);
         ReservMgt.SetItemTrackingHandling(1);
         ReservMgt.DeleteReservEntries(false, ItemLedgEntryRec."Remaining Quantity");
         ReservMgt.ClearSurplus;
@@ -3726,9 +3724,9 @@ codeunit 50121 INHItemJnlPostLine
             SignFactor := ItemJnlLine2.Signed(1);
 
         ItemTrackingCode.Code := Item."Item Tracking Code";
-        ItemTrackingMgt.GetItemTrackingSettings(
-          ItemTrackingCode, ItemJnlLine."Entry Type", ItemJnlLine.Signed(ItemJnlLine."Quantity (Base)") > 0,
-          SNRequired, LotRequired, SNInfoRequired, LotInfoRequired);
+        // ItemTrackingMgt.GetItemTrackingSettings(
+        //   ItemTrackingCode, ItemJnlLine."Entry Type", ItemJnlLine.Signed(ItemJnlLine."Quantity (Base)") > 0,
+        //   SNRequired, LotRequired, SNInfoRequired, LotInfoRequired);
 
         if Item."Costing Method" = Item."Costing Method"::Specific then begin
             Item.TestField("Item Tracking Code");
@@ -3935,14 +3933,14 @@ codeunit 50121 INHItemJnlPostLine
         if IsHandled then
             exit;
 
-        ExistingExpirationDate :=
-          ItemTrackingMgt.ExistingExpirationDate(
-            TempTrackingSpecification."Item No.",
-            TempTrackingSpecification."Variant Code",
-            TempTrackingSpecification."Lot No.",
-            TempTrackingSpecification."Serial No.",
-            true,
-            EntriesExist);
+        // ExistingExpirationDate :=
+        //   ItemTrackingMgt.ExistingExpirationDate(
+        //     TempTrackingSpecification."Item No.",
+        //     TempTrackingSpecification."Variant Code",
+        //     TempTrackingSpecification."Lot No.",
+        //     TempTrackingSpecification."Serial No.",
+        //     true,
+        //     EntriesExist);
 
         if not (EntriesExist or ExpirationDateChecked) then begin
             ItemTrackingMgt.TestExpDateOnTrackingSpec(TempTrackingSpecification);
@@ -3977,13 +3975,13 @@ codeunit 50121 INHItemJnlPostLine
                 TempTrackingSpecification.TestField("Expiration Date", ExistingExpirationDate);
         end else   // Demand
             if ItemJnlLine2."Entry Type" = ItemJnlLine2."Entry Type"::Transfer then begin
-                ExistingExpirationDate :=
-                  ItemTrackingMgt.ExistingExpirationDateAndQty(
-                    TempTrackingSpecification."Item No.",
-                    TempTrackingSpecification."Variant Code",
-                    TempTrackingSpecification."New Lot No.",
-                    TempTrackingSpecification."New Serial No.",
-                    SumOfEntries);
+                // ExistingExpirationDate :=
+                //   ItemTrackingMgt.ExistingExpirationDateAndQty(
+                //     TempTrackingSpecification."Item No.",
+                //     TempTrackingSpecification."Variant Code",
+                //     TempTrackingSpecification."New Lot No.",
+                //     TempTrackingSpecification."New Serial No.",
+                //     SumOfEntries);
 
                 if (ItemJnlLine2."Order Type" = ItemJnlLine2."Order Type"::Transfer) and
                    (ItemJnlLine2."Order No." <> '')
@@ -4179,9 +4177,9 @@ codeunit 50121 INHItemJnlPostLine
         NewItemLedgEntry := OldItemLedgEntry;
         //START C24° ---------------------------------
         NewItemLedgEntry."Posting Date" := ItemJnlLine."Posting Date";
-        NewItemLedgEntry."gebucht am" := WorkDate;
-        NewItemLedgEntry."gebucht um" := Time;
-        NewItemLedgEntry."gebucht von" := CopyStr(UserId, 1, 10);
+        // NewItemLedgEntry."gebucht am" := WorkDate;
+        // NewItemLedgEntry."gebucht um" := Time;
+        // NewItemLedgEntry."gebucht von" := CopyStr(UserId, 1, 10);
         //STOP  C24° ---------------------------------
         ItemTrackingMgt.RetrieveAppliedExpirationDate(NewItemLedgEntry);
         NewItemLedgEntry."Entry No." := ItemLedgEntryNo;
@@ -4207,14 +4205,14 @@ codeunit 50121 INHItemJnlPostLine
         NewItemLedgEntry.Insert;
         OnAfterInsertCorrItemLedgEntry(NewItemLedgEntry, ItemJnlLine, OldItemLedgEntry);
 
-        if NewItemLedgEntry."Item Tracking" <> NewItemLedgEntry."Item Tracking"::None then
-            ItemTrackingMgt.ExistingExpirationDate(
-              NewItemLedgEntry."Item No.",
-              NewItemLedgEntry."Variant Code",
-              NewItemLedgEntry."Lot No.",
-              NewItemLedgEntry."Serial No.",
-              true,
-              EntriesExist);
+        // if NewItemLedgEntry."Item Tracking" <> NewItemLedgEntry."Item Tracking"::None then
+        //     ItemTrackingMgt.ExistingExpirationDate(
+        //       NewItemLedgEntry."Item No.",
+        //       NewItemLedgEntry."Variant Code",
+        //       NewItemLedgEntry."Lot No.",
+        //       NewItemLedgEntry."Serial No.",
+        //       true,
+        //       EntriesExist);
     end;
 
     local procedure UpdateOldItemLedgEntry(var OldItemLedgEntry: Record "Item Ledger Entry"; LastInvoiceDate: Date)

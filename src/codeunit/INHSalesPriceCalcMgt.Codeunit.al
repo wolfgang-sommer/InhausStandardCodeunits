@@ -1837,7 +1837,7 @@ codeunit 50137 INHSalesPriceCalcMgt
     [Scope('Internal')]
     procedure fnk_GetItemDiscGrp(par_co_ItemNo: Code[20]; par_da_Date: Date; par_te_CompanyName: Text[30]) rv_co_ItemDiscGrp: Code[20]
     var
-        lo_re_InitTable: Record "Init-Tabelle";
+        lo_re_InitTable: Record "INHInitTable";
         lo_re_Item: Record Item;
         lo_re_SalesPrice: Record "Sales Price";
     begin
@@ -1954,7 +1954,7 @@ codeunit 50137 INHSalesPriceCalcMgt
     [Scope('Internal')]
     procedure fnk_GetSalesListPrice(par_re_Item: Record Item; par_te_Companyname: Text[30]) rv_de_Price: Decimal
     var
-        lo_re_InitTable: Record "Init-Tabelle";
+        lo_re_InitTable: Record "INHInitTable";
         lo_re_SalesPrice: Record "Sales Price";
     begin
         // *** Aktuell gültiger Listenpreis(=Artikelkarte->Reiter Fakturierung->VK-Preis)   //A22°.5

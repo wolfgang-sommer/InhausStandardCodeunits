@@ -62,7 +62,6 @@ codeunit 50127 INHPurchPostPrint
     var
         ConfirmManagement: Codeunit "Confirm Management";
         Selection: Integer;
-        "+++TE_INHAUS+++": ;
         TextSelectionJustShip: Label '&Liefern';
     begin
         with PurchHeader do begin
@@ -95,7 +94,7 @@ codeunit 50127 INHPurchPostPrint
                         if Status <> Status::Released then
                             Error('Bitte die Rechnung zuerst freigeben!');
                     //STOP  Axx° ---------------------------------
-                    if not ConfirmManagement.ConfirmProcess(
+                    if not ConfirmManagement.GetResponse(
                          StrSubstNo(PostAndPrintQst, "Document Type"), true)
                     then
                         exit(false);

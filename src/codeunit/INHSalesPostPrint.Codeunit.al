@@ -210,7 +210,7 @@ codeunit 50135 INHSalesPostPrint
                         Invoice := Selection in [2, 3];
                     end
                 else
-                    if not ConfirmManagement.ConfirmProcess(
+                    if not ConfirmManagement.GetResponse
                          StrSubstNo(ConfirmationMessage, "Document Type"), true)
                     then
                         exit(false);

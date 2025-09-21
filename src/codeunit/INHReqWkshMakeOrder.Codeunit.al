@@ -83,7 +83,7 @@ codeunit 50167 INHReqWkshMakeOrder
         NameAddressDetails: Text;
         SuppressCommit: Boolean;
         "+++VAR_INHAUS+++": Boolean;
-        re_InitTable: Record "Init-Tabelle";
+        re_InitTable: Record "INHInitTable";
         cu_PurchMgt: Codeunit PurchaseMgt;
         co_GoodsRcptGroup: Code[20];
         co_MainOrderNo: Code[20];

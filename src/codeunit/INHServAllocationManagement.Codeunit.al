@@ -147,7 +147,7 @@ codeunit 50140 INHServAllocationManagement
     begin
         with SplitServOrderAlloc do begin
             TestField(Status, Status::Active);
-            if not ConfirmManagement.ConfirmProcess(
+            if not ConfirmManagement.GetResponse
                  StrSubstNo(
                    Text002, Res.TableCaption, "Resource No.", RepairStatus.TableCaption,
                    RepairStatus.FieldCaption(Finished)), true)

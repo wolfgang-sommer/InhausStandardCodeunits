@@ -83,7 +83,7 @@ codeunit 50151 INHWhseActivityRegister
         TempWhseActivityLineGrouped: Record "Warehouse Activity Line" temporary;
         SkipDelete: Boolean;
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_LogisticsMgt: Codeunit LogisticsMgt;
+        lo_cu_LogisticsMgt: Codeunit INHLogisticsMgt;
         WhseShptLine: Record "Warehouse Shipment Line";
     begin
         OnBeforeCode(WhseActivLine);

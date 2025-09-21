@@ -28,7 +28,6 @@ codeunit 50174 INHCustCheckCrLimit
         CreditLimitNotificationDescriptionTxt: Label 'Show warning when a sales document will exceed the customer''s credit limit.';
         OverdueBalanceNotificationMsg: Label 'This customer has an overdue balance.';
         OverdueBalanceNotificationDescriptionTxt: Label 'Show warning when a sales document is for a customer with an overdue balance.';
-        "+++TE_INHAUS+++": ;
         TextCreditLimitExceeded: Label 'Das Kreditlimit dieses Debitors(%1) wurde überschritten. Bitte melden Sie sich in der Buchhaltung! Auftrag kann nicht verwendet werden.';
 
     procedure GenJnlLineCheck(GenJnlLine: Record "Gen. Journal Line")
@@ -43,8 +42,8 @@ codeunit 50174 INHCustCheckCrLimit
             SalesHeader.Init;
         OnNewCheckRemoveCustomerNotifications(SalesHeader.RecordId, true);
 
-        if CustCheckCreditLimit.GenJnlLineShowWarningAndGetCause(GenJnlLine, AdditionalContextId) then
-            CreateAndSendNotification(SalesHeader.RecordId, AdditionalContextId, '');
+        // if CustCheckCreditLimit.GenJnlLineShowWarningAndGetCause(GenJnlLine, AdditionalContextId) then
+        //     CreateAndSendNotification(SalesHeader.RecordId, AdditionalContextId, '');
     end;
 
     procedure SalesHeaderCheck(var SalesHeader: Record "Sales Header") CreditLimitExceeded: Boolean
@@ -63,7 +62,7 @@ codeunit 50174 INHCustCheckCrLimit
                 CreditLimitExceeded := true;
 
                 CreateAndSendNotification(SalesHeader.RecordId, AdditionalContextId, '');
-                SalesHeader.OnCustomerCreditLimitExceeded;
+                // SalesHeader.OnCustomerCreditLimitExceeded;
             end;
     end;
 
@@ -79,13 +78,13 @@ codeunit 50174 INHCustCheckCrLimit
             SalesHeader.Init;
         OnNewCheckRemoveCustomerNotifications(SalesHeader.RecordId, false);
 
-        if not CustCheckCreditLimit.SalesLineShowWarningAndGetCause(SalesLine, AdditionalContextId) then
-            SalesHeader.OnCustomerCreditLimitNotExceeded
-        else
-            if InstructionMgt.IsEnabled(GetInstructionType(Format(SalesLine."Document Type"), SalesLine."Document No.")) then begin
-                CreateAndSendNotification(SalesHeader.RecordId, AdditionalContextId, '');
-                SalesHeader.OnCustomerCreditLimitExceeded;
-            end;
+        // if not CustCheckCreditLimit.SalesLineShowWarningAndGetCause(SalesLine, AdditionalContextId) then
+        //     SalesHeader.OnCustomerCreditLimitNotExceeded
+        // else
+        // if InstructionMgt.IsEnabled(GetInstructionType(Format(SalesLine."Document Type"), SalesLine."Document No.")) then begin
+        //     CreateAndSendNotification(SalesHeader.RecordId, AdditionalContextId, '');
+        //     SalesHeader.OnCustomerCreditLimitExceeded;
+        // end;
     end;
 
     procedure ServiceHeaderCheck(ServiceHeader: Record "Service Header")
@@ -97,8 +96,8 @@ codeunit 50174 INHCustCheckCrLimit
 
         OnNewCheckRemoveCustomerNotifications(ServiceHeader.RecordId, true);
 
-        if CustCheckCreditLimit.ServiceHeaderShowWarningAndGetCause(ServiceHeader, AdditionalContextId) then
-            CreateAndSendNotification(ServiceHeader.RecordId, AdditionalContextId, '');
+        // if CustCheckCreditLimit.ServiceHeaderShowWarningAndGetCause(ServiceHeader, AdditionalContextId) then
+        //     CreateAndSendNotification(ServiceHeader.RecordId, AdditionalContextId, '');
     end;
 
     procedure ServiceLineCheck(ServiceLine: Record "Service Line")
@@ -113,8 +112,8 @@ codeunit 50174 INHCustCheckCrLimit
             ServiceHeader.Init;
         OnNewCheckRemoveCustomerNotifications(ServiceHeader.RecordId, false);
 
-        if CustCheckCreditLimit.ServiceLineShowWarningAndGetCause(ServiceLine, AdditionalContextId) then
-            CreateAndSendNotification(ServiceHeader.RecordId, AdditionalContextId, '');
+        // if CustCheckCreditLimit.ServiceLineShowWarningAndGetCause(ServiceLine, AdditionalContextId) then
+        //     CreateAndSendNotification(ServiceHeader.RecordId, AdditionalContextId, '');
     end;
 
     procedure ServiceContractHeaderCheck(ServiceContractHeader: Record "Service Contract Header")
@@ -126,8 +125,8 @@ codeunit 50174 INHCustCheckCrLimit
 
         OnNewCheckRemoveCustomerNotifications(ServiceContractHeader.RecordId, true);
 
-        if CustCheckCreditLimit.ServiceContractHeaderShowWarningAndGetCause(ServiceContractHeader, AdditionalContextId) then
-            CreateAndSendNotification(ServiceContractHeader.RecordId, AdditionalContextId, '');
+        // if CustCheckCreditLimit.ServiceContractHeaderShowWarningAndGetCause(ServiceContractHeader, AdditionalContextId) then
+        //     CreateAndSendNotification(ServiceContractHeader.RecordId, AdditionalContextId, '');
     end;
 
     procedure GetInstructionType(DocumentType: Code[30]; DocumentNumber: Code[20]): Code[50]
@@ -230,17 +229,11 @@ codeunit 50174 INHCustCheckCrLimit
           DATABASE::Customer);
     end;
 
-    [Scope('Internal')]
-    procedure "+++FNK_INHAUS+++"()
-    begin
-    end;
-
-    [Scope('Internal')]
     procedure fnk_CreditLimitExceeded(par_co_SalesHdrNo: Code[20]; par_te_Company: Text[30])
     var
         lo_re_Cust: Record Customer;
         lo_re_SalesHdr: Record "Sales Header";
-        lo_re_SalesHdrView: Record VIEW_SalesHeader;
+        lo_re_SalesHdrView: Record "Sales Header";
     begin
         // *** Wenn Kreditlimit überschritten wurde   //B43°.1
         //     - Auftrag öffnen + Kreditlimit setzen
@@ -267,21 +260,20 @@ codeunit 50174 INHCustCheckCrLimit
         end;
 
         Commit;
-        if lo_re_Cust.fnk_UsesCompGrpCreditLimit then begin
-            Error(TextCreditLimitExceeded, lo_re_Cust.FieldCaption("Company Group") + ' ' + lo_re_Cust."Company Group");
-        end else begin
-            Error(TextCreditLimitExceeded, lo_re_Cust."No.");
-        end;
+        // if lo_re_Cust.UsesCompGrpCreditLimit then begin
+        //     Error(TextCreditLimitExceeded, lo_re_Cust.FieldCaption("Company Group") + ' ' + lo_re_Cust."Company Group");
+        // end else begin
+        //     Error(TextCreditLimitExceeded, lo_re_Cust."No.");
+        // end;
     end;
 
-    [Scope('Internal')]
     procedure fnk_GetOutstOrd4CrLimitFilter() rv_te_Filter: Text[250]
     var
-        lo_cu_LogisticsMgt: Codeunit LogisticsMgt;
+        lo_cu_LogisticsMgt: Codeunit INHLogisticsMgt;
     begin
         //B43°.3
         //rv_te_Filter := STRSUBSTNO('..%1',CALCDATE('<+1D>',WORKDATE));
-        rv_te_Filter := StrSubstNo('..%1', lo_cu_LogisticsMgt.fnk_GetNextWorkingDay(WorkDate, 0, false));
+        rv_te_Filter := StrSubstNo('..%1', lo_cu_LogisticsMgt.GetNextWorkingDay(WorkDate, 0, false));
     end;
 
     [IntegrationEvent(false, false)]

@@ -28,7 +28,7 @@ codeunit 50145 INHTransferOrderPostShipment
         LineCount: Integer;
         NextLineNo: Integer;
         "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_Logistikverwaltung: Codeunit LogisticsMgt;
+        lo_cu_Logistikverwaltung: Codeunit INHLogisticsMgt;
     begin
         ReleaseDocument(Rec);
         TransHeader := Rec;

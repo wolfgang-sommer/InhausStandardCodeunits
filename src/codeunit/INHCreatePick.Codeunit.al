@@ -130,7 +130,7 @@ codeunit 50176 INHCreatePick
 
         RemQtyToPick := TotalQtytoPick;
         RemQtyToPickBase := TotalQtytoPickBase;
-        ItemTrackingMgt.CheckWhseItemTrkgSetup(ItemNo, SNRequired, LNRequired, false);
+        // ItemTrackingMgt.CheckWhseItemTrkgSetup(ItemNo, SNRequired, LNRequired, false);
 
         ReqFEFOPick := false;
         HasExpiredItems := false;
@@ -500,7 +500,7 @@ codeunit 50176 INHCreatePick
           LocationCode, ItemNo, VariantCode, UnitofMeasureCode, ToBinCode, QtyPerUnitofMeasure);
 
         if TotalQtytoPickBase > 0 then begin
-            ItemTrackingMgt.CheckWhseItemTrkgSetup(ItemNo, SNRequired, LNRequired, false);
+            // ItemTrackingMgt.CheckWhseItemTrkgSetup(ItemNo, SNRequired, LNRequired, false);
             FindPickBin(
               LocationCode, ItemNo, VariantCode, UnitofMeasureCode,
               ToBinCode, TempWhseActivLine, TotalQtytoPick, TempWhseItemTrackingLine, CrossDock, TotalQtytoPickBase);
@@ -3756,7 +3756,7 @@ codeunit 50176 INHCreatePick
         lo_re_BinContent: Record "Bin Content";
         lo_re_Item: Record Item;
         lo_re_WhseShptLine: Record "Warehouse Shipment Line";
-        lo_cu_LogisticsMgt: Codeunit LogisticsMgt;
+        lo_cu_LogisticsMgt: Codeunit INHLogisticsMgt;
         lo_co_Bin: Code[20];
         i: Integer;
     begin

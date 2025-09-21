@@ -10,7 +10,14 @@
   "privacyStatement": "http://inhausgruppe.com",
   "contextSensitiveHelpUrl": "http://inhausgruppe.com",
   "url": "http://inhausgruppe.com",
-  "dependencies": [],
+  "dependencies": [
+    {
+      "id": "bef916f2-a31e-4ac8-91d9-c2b62b90e399",
+      "name": "BaseAppInhaus",
+      "publisher": "Inhaus AG",
+      "version": "1.0.0.0"
+    }
+  ],
   "screenshots": [],
   "platform": "26.0.0.0",
   "application": "26.0.0.0",

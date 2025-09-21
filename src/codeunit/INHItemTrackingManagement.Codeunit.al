@@ -53,7 +53,7 @@ codeunit 50124 INHItemTrackingManagement
     begin
         with TrackingSpecification do begin
             SetSourceFilter("Source Type", "Source Subtype", "Source ID", "Source Ref. No.", true);
-            SetSourceFilter2("Source Batch Name", "Source Prod. Order Line");
+            // SetSourceFilter2("Source Batch Name", "Source Prod. Order Line");
         end;
     end;
 
@@ -61,12 +61,12 @@ codeunit 50124 INHItemTrackingManagement
     var
         LotNoInfo: Record "Lot No. Information";
         SerialNoInfo: Record "Serial No. Information";
-        lo_fo_ItemTrackInfo: Page "Item Tracking Information";
+    // lo_fo_ItemTrackInfo: Page "Item Tracking Information";
     begin
         //START Axx°.2 ---------------------------------
         if not bo_UseDefLookupLotSNoInfo then begin
-            lo_fo_ItemTrackInfo.fnk_Init(ItemNo, Variant, LookupType, LookupNo);
-            lo_fo_ItemTrackInfo.RunModal;
+            // lo_fo_ItemTrackInfo.fnk_Init(ItemNo, Variant, LookupType, LookupNo);
+            // lo_fo_ItemTrackInfo.RunModal;
             exit;
         end;
         //STOP  Axx°.2 ---------------------------------
@@ -213,7 +213,7 @@ codeunit 50124 INHItemTrackingManagement
         ReservEntry.SetSourceFilter(
           SourceSpecification."Source Type", SourceSpecification."Source Subtype", SourceSpecification."Source ID",
           SourceSpecification."Source Ref. No.", true);
-        ReservEntry.SetSourceFilter2(SourceSpecification."Source Batch Name", SourceSpecification."Source Prod. Order Line");
+        // ReservEntry.SetSourceFilter2(SourceSpecification."Source Batch Name", SourceSpecification."Source Prod. Order Line");
         ReservEntry.SetFilter("Reservation Status", '<>%1', ReservEntry."Reservation Status"::Prospect);
         ReservEntry.SetFilter("Item Tracking", '<>%1', ReservEntry."Item Tracking"::None);
         SumUpItemTracking(ReservEntry, TempTrackingSpecSummedUp, false, true);
@@ -222,8 +222,8 @@ codeunit 50124 INHItemTrackingManagement
         TrackingSpecification.SetSourceFilter(
           SourceSpecification."Source Type", SourceSpecification."Source Subtype", SourceSpecification."Source ID",
           SourceSpecification."Source Ref. No.", true);
-        TrackingSpecification.SetSourceFilter2(
-          SourceSpecification."Source Batch Name", SourceSpecification."Source Prod. Order Line");
+        // TrackingSpecification.SetSourceFilter2(
+        //   SourceSpecification."Source Batch Name", SourceSpecification."Source Prod. Order Line");
         if TrackingSpecification.FindSet then
             repeat
                 TrackingSpecification.TestField("Qty. to Handle (Base)", 0);
@@ -236,8 +236,8 @@ codeunit 50124 INHItemTrackingManagement
                     TempInvoicingSpecification.Insert;
                     OK := true;
 
-                    TempTrackingSpecSummedUp.SetTrackingFilter(
-                      TempInvoicingSpecification."Serial No.", TempInvoicingSpecification."Lot No.");
+                    // TempTrackingSpecSummedUp.SetTrackingFilter(
+                    //   TempInvoicingSpecification."Serial No.", TempInvoicingSpecification."Lot No.");
                     if TempTrackingSpecSummedUp.FindFirst then begin
                         TempTrackingSpecSummedUp."Qty. to Invoice (Base)" += TempInvoicingSpecification."Qty. to Invoice (Base)";
                         OnBeforeTempTrackingSpecSummedUpModify(TempTrackingSpecSummedUp, TempInvoicingSpecification);
@@ -286,7 +286,7 @@ codeunit 50124 INHItemTrackingManagement
         else
             ReservEntry.SetRange("Source Type", DATABASE::"Sales Line");
         //STOP  Axx° ---------------------------------
-        ReservEntry.SetSourceFilter2(ItemJnlLine."Journal Batch Name", 0);
+        // ReservEntry.SetSourceFilter2(ItemJnlLine."Journal Batch Name", 0);
         OnAfterReserveEntryFilter(ItemJnlLine, ReservEntry);
         ReservEntry.SetFilter("Qty. to Handle (Base)", '<>0');
         OnRetrieveItemTrackingFromReservEntryFilter(ReservEntry, ItemJnlLine);
@@ -333,7 +333,7 @@ codeunit 50124 INHItemTrackingManagement
             exit(false);
 
         ReservEntry.SetSourceFilter(DATABASE::"Prod. Order Line", 3, ItemJnlLine."Order No.", 0, true);
-        ReservEntry.SetSourceFilter2('', ItemJnlLine."Order Line No.");
+        // ReservEntry.SetSourceFilter2('', ItemJnlLine."Order Line No.");
         ReservEntry.SetFilter("Qty. to Handle (Base)", '<>0');
         if SumUpItemTracking(ReservEntry, TempHandlingSpecification, false, true) then begin
             ReservEntry.SetRange("Reservation Status", ReservEntry."Reservation Status"::Prospect);
@@ -351,7 +351,7 @@ codeunit 50124 INHItemTrackingManagement
         ItemJnlLine.TestField("Order Type", ItemJnlLine."Order Type"::Production);
         ReservEntry.SetSourceFilter(
           DATABASE::"Prod. Order Component", 3, ItemJnlLine."Order No.", ItemJnlLine."Prod. Order Comp. Line No.", true);
-        ReservEntry.SetSourceFilter2('', ItemJnlLine."Order Line No.");
+        // ReservEntry.SetSourceFilter2('', ItemJnlLine."Order Line No.");
         ReservEntry.SetFilter("Qty. to Handle (Base)", '<>0');
         ReservEntry.SetTrackingFilterFromItemJnlLine(ItemJnlLine);
 
@@ -961,9 +961,9 @@ codeunit 50124 INHItemTrackingManagement
                     TempPostedWhseRcptLine.Reset;
                     TempPostedWhseRcptLine := PostedWhseRcptLine;
                     TempPostedWhseRcptLine."Line No." := LineNo;
-                    TempPostedWhseRcptLine.SetTracking(
-                      WhseItemEntryRelation."Serial No.", WhseItemEntryRelation."Lot No.",
-                      ItemLedgEntry."Warranty Date", ItemLedgEntry."Expiration Date");
+                    // TempPostedWhseRcptLine.SetTracking(
+                    //   WhseItemEntryRelation."Serial No.", WhseItemEntryRelation."Lot No.",
+                    //   ItemLedgEntry."Warranty Date", ItemLedgEntry."Expiration Date");
                     TempPostedWhseRcptLine."Qty. (Base)" := ItemLedgEntry.Quantity;
                     TempPostedWhseRcptLine.Quantity :=
                       Round(
@@ -1031,16 +1031,16 @@ codeunit 50124 INHItemTrackingManagement
         WhseItemTrackingLine.Reset;
         WhseItemTrackingLine.SetSourceFilter(
           DATABASE::"Whse. Internal Put-away Line", 0, PostedWhseRcptLine."No.", PostedWhseRcptLine."Line No.", true);
-        WhseItemTrackingLine.SetSourceFilter2('', 0);
+        // WhseItemTrackingLine.SetSourceFilter2('', 0);
         WhseItemTrackingLine.SetFilter("Qty. to Handle (Base)", '<>0');
         if WhseItemTrackingLine.FindSet then
             repeat
                 LineNo += 10000;
                 TempPostedWhseRcptLine := PostedWhseRcptLine;
                 TempPostedWhseRcptLine."Line No." := LineNo;
-                TempPostedWhseRcptLine.SetTracking(
-                  WhseItemTrackingLine."Serial No.", WhseItemTrackingLine."Lot No.",
-                  WhseItemTrackingLine."Warranty Date", WhseItemTrackingLine."Expiration Date");
+                // TempPostedWhseRcptLine.SetTracking(
+                //   WhseItemTrackingLine."Serial No.", WhseItemTrackingLine."Lot No.",
+                //   WhseItemTrackingLine."Warranty Date", WhseItemTrackingLine."Expiration Date");
                 TempPostedWhseRcptLine."Qty. (Base)" := WhseItemTrackingLine."Qty. to Handle (Base)";
                 TempPostedWhseRcptLine.Quantity :=
                   Round(
@@ -1069,7 +1069,7 @@ codeunit 50124 INHItemTrackingManagement
             Reset;
             SetSourceFilter(SourceType, SourceSubtype, SourceID, -1, true);
             if RelatedToLine then begin
-                SetSourceFilter2(SourceBatchName, SourceProdOrderLine);
+                // SetSourceFilter2(SourceBatchName, SourceProdOrderLine);
                 SetRange("Source Ref. No.", SourceRefNo);
                 SetRange("Location Code", LocationCode);
             end;
@@ -1223,11 +1223,11 @@ codeunit 50124 INHItemTrackingManagement
                 DATABASE::"Prod. Order Component":
                     begin
                         SourceItemTrackingLine.SetSourceFilter("Source Type", "Source Subtype", "Source No.", "Source Subline No.", true);
-                        SourceItemTrackingLine.SetSourceFilter2('', "Source Line No.");
+                        // SourceItemTrackingLine.SetSourceFilter2('', "Source Line No.");
                     end;
                 else begin
                     SourceItemTrackingLine.SetSourceFilter("Source Type", "Source Subtype", "Source No.", "Source Line No.", true);
-                    SourceItemTrackingLine.SetSourceFilter2('', 0);
+                    // SourceItemTrackingLine.SetSourceFilter2('', 0);
                 end;
             end;
             if SourceItemTrackingLine.FindSet then
@@ -1374,12 +1374,12 @@ codeunit 50124 INHItemTrackingManagement
         if TempWhseItemTrkgLine.FindSet then
             repeat
                 WhseItemTrkgLine.SetCurrentKey("Serial No.", "Lot No.");
-                WhseItemTrkgLine.SetTrackingFilter(TempWhseItemTrkgLine."Serial No.", TempWhseItemTrkgLine."Lot No.");
+                // WhseItemTrkgLine.SetTrackingFilter(TempWhseItemTrkgLine."Serial No.", TempWhseItemTrkgLine."Lot No.");
                 WhseItemTrkgLine.SetSourceFilter(
                   TempWhseItemTrkgLine."Source Type", TempWhseItemTrkgLine."Source Subtype", TempWhseItemTrkgLine."Source ID",
                   TempWhseItemTrkgLine."Source Ref. No.", false);
-                WhseItemTrkgLine.SetSourceFilter2(
-                  TempWhseItemTrkgLine."Source Batch Name", TempWhseItemTrkgLine."Source Prod. Order Line");
+                // WhseItemTrkgLine.SetSourceFilter2(
+                //   TempWhseItemTrkgLine."Source Batch Name", TempWhseItemTrkgLine."Source Prod. Order Line");
                 WhseItemTrkgLine.LockTable;
                 if WhseItemTrkgLine.FindFirst then begin
                     CalcWhseItemTrkgLine(WhseItemTrkgLine);
@@ -1436,9 +1436,9 @@ codeunit 50124 INHItemTrackingManagement
                           WhseItemEntryRelation."Source Type", WhseItemEntryRelation."Source Subtype", WhseItemEntryRelation."Source ID",
                           WhseItemEntryRelation."Source Ref. No.", WhseItemEntryRelation."Source Batch Name",
                           WhseItemEntryRelation."Source Prod. Order Line");
-                        WhseItemTrkgLine.SetTracking(
-                          WhseItemEntryRelation."Serial No.", WhseItemEntryRelation."Lot No.",
-                          ItemLedgEntry."Warranty Date", ItemLedgEntry."Expiration Date");
+                        // WhseItemTrkgLine.SetTracking(
+                        //   WhseItemEntryRelation."Serial No.", WhseItemEntryRelation."Lot No.",
+                        //   ItemLedgEntry."Warranty Date", ItemLedgEntry."Expiration Date");
                         WhseItemTrkgLine."Qty. per Unit of Measure" := ItemLedgEntry."Qty. per Unit of Measure";
                         WhseItemTrkgLine."Quantity Handled (Base)" := QtyHandledBase;
                         WhseItemTrkgLine."Qty. Registered (Base)" := QtyHandledBase;
@@ -1631,7 +1631,7 @@ codeunit 50124 INHItemTrackingManagement
             if FromReservEntry.IsEmpty then
                 exit;
             if DialogText <> '' then
-                if not ConfirmManagement.ConfirmProcess(DialogText, true) then begin
+                if not ConfirmManagement.GetResponse(DialogText, true) then begin
                     Message(Text006);
                     exit;
                 end;
@@ -1704,7 +1704,7 @@ codeunit 50124 INHItemTrackingManagement
 
             if not TempTrkgSpec3.IsEmpty then begin
                 if DialogText <> '' then
-                    if not ConfirmManagement.ConfirmProcess(DialogText, true) then begin
+                    if not ConfirmManagement.GetResponse(DialogText, true) then begin
                         Message(Text006);
                         exit;
                     end;
@@ -1897,7 +1897,7 @@ codeunit 50124 INHItemTrackingManagement
         CommentType: Option " ","Serial No.","Lot No.";
     begin
         if NewLotNoInfo.Get(LotNoInfo."Item No.", LotNoInfo."Variant Code", NewLotNo) then begin
-            if not ConfirmManagement.ConfirmProcess(
+            if not ConfirmManagement.GetResponse(
                  StrSubstNo(
                    text008, LotNoInfo.TableCaption, LotNoInfo.FieldCaption("Lot No."), NewLotNo), true)
             then
@@ -1925,7 +1925,7 @@ codeunit 50124 INHItemTrackingManagement
         CommentType: Option " ","Serial No.","Lot No.";
     begin
         if NewSerialNoInfo.Get(SerialNoInfo."Item No.", SerialNoInfo."Variant Code", NewSerialNo) then begin
-            if not ConfirmManagement.ConfirmProcess(
+            if not ConfirmManagement.GetResponse(
                  StrSubstNo(
                    text008, SerialNoInfo.TableCaption, SerialNoInfo.FieldCaption("Serial No."), NewSerialNo), true)
             then

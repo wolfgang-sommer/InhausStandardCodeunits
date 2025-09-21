@@ -246,14 +246,13 @@ codeunit 50119 INHItemJnlPostBatch
         OnAfterCheckLines(ItemJnlLine);
     end;
 
-    [Scope('Internal')]
     procedure PostLines(var ItemJnlLine: Record "Item Journal Line"; var PhysInvtCountMgt: Codeunit "Phys. Invt. Count.-Management")
     var
         TempTrackingSpecification: Record "Tracking Specification" temporary;
         OriginalQuantity: Decimal;
         OriginalQuantityBase: Decimal;
         "+++LO_VAR_INHAUS+++": Integer;
-        lo_cu_DialogMgt: Codeunit DialogMgt;
+        lo_cu_DialogMgt: Codeunit INHDialogMgt;
     begin
         LastDocNo := '';
         LastDocNo2 := '';
@@ -279,7 +278,7 @@ codeunit 50119 INHItemJnlPostBatch
                        (("Invoiced Quantity" <> 0) and (Amount <> 0))
                     then begin
                         LineCount := LineCount + 1;
-                        if lo_cu_DialogMgt.fnk_DialogNeedsUpdate(UserId, 0, 5, 23, '') then begin   //B62°
+                        if lo_cu_DialogMgt.DialogNeedsUpdate(UserId, 0, 5, 23, '') then begin   //B62°
                             Window.Update(3, LineCount);
                             Window.Update(4, Round(LineCount / NoOfRecords * 10000, 1));
                         end;   //B62°
@@ -312,7 +311,7 @@ codeunit 50119 INHItemJnlPostBatch
         ItemJnlLine2: Record "Item Journal Line";
         IsHandled: Boolean;
         "+++LO_VAR_INHAUS+++": Integer;
-        lo_cu_DialogMgt: Codeunit DialogMgt;
+        lo_cu_DialogMgt: Codeunit INHDialogMgt;
     begin
         IsHandled := false;
         OnBeforeHandleRecurringLine(ItemJnlLine, IsHandled);
@@ -324,7 +323,7 @@ codeunit 50119 INHItemJnlPostBatch
         ItemJnlLine2.FindSet;
         repeat
             LineCount := LineCount + 1;
-            if lo_cu_DialogMgt.fnk_DialogNeedsUpdate(UserId, 0, 5, 23, '') then begin   //B62°
+            if lo_cu_DialogMgt.DialogNeedsUpdate(UserId, 0, 5, 23, '') then begin   //B62°
                 Window.Update(5, LineCount);
                 Window.Update(6, Round(LineCount / NoOfRecords * 10000, 1));
             end;   //B62°
@@ -480,14 +479,14 @@ codeunit 50119 INHItemJnlPostBatch
         PostingDate: Date;
         IsLastEntry: Boolean;
         "+++LO_VAR_INHAUS+++": Integer;
-        lo_cu_DialogMgt: Codeunit DialogMgt;
+        lo_cu_DialogMgt: Codeunit INHDialogMgt;
     begin
         DistributeCosts := true;
         RemAmountToDistribute := ItemJnlLine.Amount;
         RemQuantity := ItemJnlLine.Quantity;
         if ItemJnlLine.Amount <> 0 then begin
             LineCount := LineCount + 1;
-            if lo_cu_DialogMgt.fnk_DialogNeedsUpdate(UserId, 0, 5, 23, '') then begin   //B62°
+            if lo_cu_DialogMgt.DialogNeedsUpdate(UserId, 0, 5, 23, '') then begin   //B62°
                 Window.Update(3, LineCount);
                 Window.Update(4, Round(LineCount / NoOfRecords * 10000, 1));
             end;   //B62°

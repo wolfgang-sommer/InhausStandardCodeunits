@@ -36,11 +36,10 @@ codeunit 50116 INHGetSourceDocOutbound
         Text003: Label 'The warehouse shipment was not created because an open warehouse shipment exists for the Sales Header and Shipping Advice is %1.\\You must add the item(s) as new line(s) to the existing warehouse shipment or change Shipping Advice to Partial.';
         Text004: Label 'No %1 was found. The warehouse shipment could not be created.';
         GetSourceDocuments: Report "Get Source Documents";
-        "+++TE_INHAUS+++": ;
         TextMultipleSourceNos: Label 'Fehler: Mehrere Herkunftsnr.(%1, %2) in einem Beleg.';
         TextWhseLineExists: Label 'Es kann kein weiterer Herkunftsbelege geholt werden, da bereits Zeilen vorhanden sind!';
         "+++VAR_INHAUS+++": Boolean;
-        re_WhseOutput: Record WarehouseOutput;
+        re_WhseOutput: Record INHWarehouseOutput;
         bo_WhseOutputIsSet: Boolean;
 
     local procedure CreateWhseShipmentHeaderFromWhseRequest(var WarehouseRequest: Record "Warehouse Request"): Boolean
@@ -82,46 +81,38 @@ codeunit 50116 INHGetSourceDocOutbound
         WhseRqst: Record "Warehouse Request";
         SourceDocSelection: Page "Source Documents";
         IsHandled: Boolean;
-        "+++LO_VAR_INHAUS+++": Boolean;
-        lo_cu_ICMgt: Codeunit ICMgt;
     begin
         OnBeforeGetSingleOutboundDoc(WhseShptHeader, IsHandled);
         if IsHandled then
             exit;
 
-        //START A08° ---------------------------------
-        if lo_cu_ICMgt.fnk_IsCompanyInhausClassic(CompanyName) then begin   //C83°
-            fnk_GetSingleOutboundDoc(WhseShptHeader);
-        end else begin
-            //STOP  A08° ---------------------------------
-            Clear(GetSourceDocuments);
-            WhseShptHeader.Find;
+        Clear(GetSourceDocuments);
+        WhseShptHeader.Find;
 
-            WhseRqst.FilterGroup(2);
-            WhseRqst.SetRange(Type, WhseRqst.Type::Outbound);
-            WhseRqst.SetRange("Location Code", WhseShptHeader."Location Code");
-            WhseRqst.FilterGroup(0);
-            WhseRqst.SetRange("Document Status", WhseRqst."Document Status"::Released);
-            WhseRqst.SetRange("Completely Handled", false);
+        WhseRqst.FilterGroup(2);
+        WhseRqst.SetRange(Type, WhseRqst.Type::Outbound);
+        WhseRqst.SetRange("Location Code", WhseShptHeader."Location Code");
+        WhseRqst.FilterGroup(0);
+        WhseRqst.SetRange("Document Status", WhseRqst."Document Status"::Released);
+        WhseRqst.SetRange("Completely Handled", false);
 
-            SourceDocSelection.LookupMode(true);
-            SourceDocSelection.SetTableView(WhseRqst);
-            if SourceDocSelection.RunModal <> ACTION::LookupOK then
-                exit;
-            SourceDocSelection.GetResult(WhseRqst);
+        SourceDocSelection.LookupMode(true);
+        SourceDocSelection.SetTableView(WhseRqst);
+        if SourceDocSelection.RunModal <> ACTION::LookupOK then
+            exit;
+        SourceDocSelection.GetResult(WhseRqst);
 
-            GetSourceDocuments.SetOneCreatedShptHeader(WhseShptHeader);
-            GetSourceDocuments.SetSkipBlocked(true);
-            GetSourceDocuments.UseRequestPage(false);
-            WhseRqst.SetRange("Location Code", WhseShptHeader."Location Code");
-            GetSourceDocuments.SetTableView(WhseRqst);
-            GetSourceDocuments.RunModal;
+        GetSourceDocuments.SetOneCreatedShptHeader(WhseShptHeader);
+        GetSourceDocuments.SetSkipBlocked(true);
+        GetSourceDocuments.UseRequestPage(false);
+        WhseRqst.SetRange("Location Code", WhseShptHeader."Location Code");
+        GetSourceDocuments.SetTableView(WhseRqst);
+        GetSourceDocuments.RunModal;
 
-            UpdateShipmentHeaderStatus(WhseShptHeader);
-        end;   //A08°
+        // UpdateShipmentHeaderStatus(WhseShptHeader);
+    end;   //A08°
 
-        OnAfterGetSingleOutboundDoc(WhseShptHeader);
-    end;
+    // OnAfterGetSingleOutboundDoc(WhseShptHeader);
 
     procedure CreateFromSalesOrder(SalesHeader: Record "Sales Header")
     begin
@@ -409,8 +400,8 @@ codeunit 50116 INHGetSourceDocOutbound
     begin
         with SalesHeader do begin
             TestField(Status, Status::Released);
-            if WhseShpmntConflict("Document Type", "No.", "Shipping Advice") then
-                Error(Text003, Format("Shipping Advice"));
+            // if WhseShpmntConflict("Document Type", "No.", "Shipping Advice") then
+            //     Error(Text003, Format("Shipping Advice"));
             CheckSalesHeader(SalesHeader, true);
             WhseRqst.SetRange(Type, WhseRqst.Type::Outbound);
             WhseRqst.SetSourceFilter(DATABASE::"Sales Line", "Document Type", "No.");
@@ -566,29 +557,25 @@ codeunit 50116 INHGetSourceDocOutbound
     begin
     end;
 
-    local procedure "+++FNK_INHAUS+++"()
-    begin
-    end;
-
     local procedure fnk_GetSingleOutboundDoc(var WhseShptHeader: Record "Warehouse Shipment Header")
     var
         WhseRqst: Record "Warehouse Request";
-        lo_re_InitTable: Record "Init-Tabelle";
-        lo_re_InitTableForeign: Record "Init-Tabelle";
+        lo_re_InitTable: Record INHInitTable;
+        lo_re_InitTableForeign: Record INHInitTable;
         lo_re_SalesHdr: Record "Sales Header";
-        lo_re_SalesHdrView: Record VIEW_SalesHeader;
+        lo_re_SalesHdrView: Record "Sales Header";
         lo_re_TransHdr: Record "Transfer Header";
-        lo_re_WhseOutput: Record WarehouseOutput;
+        lo_re_WhseOutput: Record INHWarehouseOutput;
         lo_re_WhseShptLine: Record "Warehouse Shipment Line";
-        lo_cu_Benutzerberechtigungen: Codeunit UserRightsMgt;
+        lo_cu_Benutzerberechtigungen: Codeunit INHUserRightsMgt;
         lo_cu_CustCheckCrLimit: Codeunit "Cust-Check Cr. Limit";
-        lo_cu_InventurMgt: Codeunit InventurMgt;
-        lo_cu_LogisticsMgt: Codeunit LogisticsMgt;
-        lo_cu_PrePaymentPlanMgmt: Codeunit "PrePayment Plan Mgmt.";
-        lo_cu_ShippingNetMgt: Codeunit ShippingNetMgt;
+        // lo_cu_InventurMgt: Codeunit INHInventurMgt;
+        lo_cu_LogisticsMgt: Codeunit INHLogisticsMgt;
+        // lo_cu_PrePaymentPlanMgmt: Codeunit INHPrePaymentPlanMgt;
+        // lo_cu_ShippingNetMgt: Codeunit INHShippingNetMgt;
         lo_fo_CustCheckCreditLimit: Page "Check Credit Limit";
-        lo_fo_Logistiktopf: Page "Logistiktopf IC-Neu";
-        lo_rp_ICGetSourceDocuments: Report "IC Get Source Documents";
+        // lo_fo_Logistiktopf: Page "Logistiktopf IC-Neu";
+        // lo_rp_ICGetSourceDocuments: Report "IC Get Source Documents";
         lo_co_PrevSourceNo: Code[20];
         lo_da_KommTag: Date;
         lo_da_PhysInvDate: Date;
@@ -603,7 +590,7 @@ codeunit 50116 INHGetSourceDocOutbound
 
             Find;
 
-            lo_da_KommTag := lo_cu_LogisticsMgt.FNK_KommDatumErrechnen(0);
+            // lo_da_KommTag := lo_cu_LogisticsMgt.FNK_KommDatumErrechnen(0);
 
             //START A08°.1 ---------------------------------
             if bo_WhseOutputIsSet then begin
@@ -618,11 +605,11 @@ codeunit 50116 INHGetSourceDocOutbound
                 WhseRqst.SetRange("Document Status", WhseRqst."Document Status"::Released);
                 WhseRqst.SetRange("Completely Handled", false);
 
-                if WhseRqst.Lieferdatum = 0D then
-                    WhseRqst.Lieferdatum := WorkDate;
+                // if WhseRqst.Lieferdatum = 0D then
+                //     WhseRqst.Lieferdatum := WorkDate;
 
-                WhseRqst.SetRange(Lieferdatum, 0D, lo_da_KommTag);
-                WhseRqst.SetRange(Auftragsstatus, WhseRqst.Auftragsstatus::"Lieferfähig");
+                // WhseRqst.SetRange(Lieferdatum, 0D, lo_da_KommTag);
+                // WhseRqst.SetRange(Auftragsstatus, WhseRqst.Auftragsstatus::"Lieferfähig");
 
                 lo_re_WhseOutput.SetRange(Type, lo_re_WhseOutput.Type::Outbound);
                 lo_re_WhseOutput.SetRange("Document Status", lo_re_WhseOutput."Document Status"::Released);
@@ -632,19 +619,19 @@ codeunit 50116 INHGetSourceDocOutbound
                     lo_re_WhseOutput.Lieferdatum := WorkDate;
 
                 lo_re_WhseOutput.SetRange(Lieferdatum, 0D, lo_da_KommTag);
-                lo_re_WhseOutput.SetRange(Auftragsstatus, WhseRqst.Auftragsstatus::"Lieferfähig");
+                // lo_re_WhseOutput.SetRange(Auftragsstatus, WhseRqst.Auftragsstatus::"Lieferfähig");
 
-                lo_fo_Logistiktopf.LookupMode(true);
-                lo_fo_Logistiktopf.SetTableView(lo_re_WhseOutput);
-                if lo_fo_Logistiktopf.RunModal <> ACTION::LookupOK then
-                    exit;
+                // lo_fo_Logistiktopf.LookupMode(true);
+                // lo_fo_Logistiktopf.SetTableView(lo_re_WhseOutput);
+                // if lo_fo_Logistiktopf.RunModal <> ACTION::LookupOK then
+                //     exit;
 
-                lo_fo_Logistiktopf.GetResult(lo_re_WhseOutput);
+                // lo_fo_Logistiktopf.GetResult(lo_re_WhseOutput);
 
             end;   //A08°.1
 
             //START A28°.1 ---------------------------------
-            lo_da_PhysInvDate := lo_cu_InventurMgt.fnk_GetNextMainPhysInvDate;
+            // lo_da_PhysInvDate := lo_cu_InventurMgt.fnk_GetNextMainPhysInvDate;
             if ((Today >= CalcDate('<-1D>', lo_da_PhysInvDate)) and (Today <= CalcDate('<+1D>', lo_da_PhysInvDate)))
             then begin
                 if Today = CalcDate('<-1D>', lo_da_PhysInvDate) then begin
@@ -657,13 +644,13 @@ codeunit 50116 INHGetSourceDocOutbound
                 //START C54° ---------------------------------
                 //IF NOT lo_cu_Benutzerberechtigungen.fnk_UserHasRole('SUPER') THEN BEGIN
                 if GuiAllowed then begin
-                    if lo_cu_Benutzerberechtigungen.fnk_UserHasRole('SUPER') then begin
+                    if lo_cu_Benutzerberechtigungen.UserHasRole('SUPER') then begin
                         lo_bo_TransferInventurAllowed := true;
                     end;
                 end;
-                if "Dont Create WhseWksh Automatic" then begin
-                    lo_bo_TransferInventurAllowed := true;
-                end;
+                // if "Dont Create WhseWksh Automatic" then begin
+                //     lo_bo_TransferInventurAllowed := true;
+                // end;
                 if not lo_bo_TransferInventurAllowed then begin
                     //STOP  C54° ---------------------------------
                     if CopyStr(lo_re_WhseOutput."Source No.", 1, 1) = 'U' then begin
@@ -680,40 +667,33 @@ codeunit 50116 INHGetSourceDocOutbound
                 Error(StrSubstNo('Für Auftrag %1 existiert bereits eine Kommision %2!',
                       lo_re_WhseOutput."Source Document", lo_re_WhseOutput.Kommissioniernr));
 
-            IC_Company := lo_re_WhseOutput.Company;
-
             Modify;
 
             if lo_re_WhseOutput.Company = CompanyName then begin
-                //START B43°.1 ---------------------------------
-                // Kreditlimitprüfung
                 if lo_re_WhseOutput."Source Document" = lo_re_WhseOutput."Source Document"::"Sales Order" then begin
                     lo_re_SalesHdr.Get(lo_re_SalesHdr."Document Type"::Order, lo_re_WhseOutput."Source No.");
-                    //START B43°.4 ---------------------------------
-                    //IF NOT (DT2DATE(lo_re_SalesHdr."Last Release") IN [WORKDATE,CALCDATE('<-1D>',WORKDATE)]) THEN BEGIN
-                    if not lo_re_SalesHdr."Skip CreditLimitCheck" then begin
-                        if lo_re_SalesHdr."Promised Delivery Date" > lo_da_KommTag then begin
-                            lo_bo_CheckCreditLimit := true;
-                        end;
-                        if not lo_bo_CheckCreditLimit then begin
-                            if not (DT2Date(lo_re_SalesHdr."Last Release") in [WorkDate, CalcDate('<-1D>', WorkDate)]) then begin
-                                lo_bo_CheckCreditLimit := true;
-                            end;
-                        end;
-                    end;
-                    if lo_bo_CheckCreditLimit then begin
-                        lo_fo_CustCheckCreditLimit.fnk_SetUseCurrentOrderNextShipInCalc(true);
-                        //STOP  B43°.4 ---------------------------------
-                        if lo_fo_CustCheckCreditLimit.SalesHeaderShowWarning(lo_re_SalesHdr) then begin
-                            lo_cu_CustCheckCrLimit.fnk_CreditLimitExceeded(lo_re_SalesHdr."No.", lo_re_WhseOutput.Company);
-                        end;
-                    end;
+                    // if not lo_re_SalesHdr."Skip CreditLimitCheck" then begin
+                    //     if lo_re_SalesHdr."Promised Delivery Date" > lo_da_KommTag then begin
+                    //         lo_bo_CheckCreditLimit := true;
+                    //     end;
+                    //     if not lo_bo_CheckCreditLimit then begin
+                    //         if not (DT2Date(lo_re_SalesHdr."Last Release") in [WorkDate, CalcDate('<-1D>', WorkDate)]) then begin
+                    //             lo_bo_CheckCreditLimit := true;
+                    //         end;
+                    //     end;
+                    // end;
+                    // if lo_bo_CheckCreditLimit then begin
+                    //     lo_fo_CustCheckCreditLimit.SetUseCurrentOrderNextShipInCalc(true);
+                    //     //STOP  B43°.4 ---------------------------------
+                    //     if lo_fo_CustCheckCreditLimit.SalesHeaderShowWarning(lo_re_SalesHdr) then begin
+                    //         lo_cu_CustCheckCrLimit.CreditLimitExceeded(lo_re_SalesHdr."No.", lo_re_WhseOutput.Company);
+                    //     end;
+                    // end;
                 end;
-                //STOP  B43°.1 ---------------------------------
 
                 Clear(GetSourceDocuments);  //C54°
                 GetSourceDocuments.SetOneCreatedShptHeader(WhseShptHeader);
-                WhseRqst.SetRange(Lieferdatum, 0D, lo_re_WhseOutput.Lieferdatum);
+                // WhseRqst.SetRange(Lieferdatum, 0D, lo_re_WhseOutput.Lieferdatum);
                 WhseRqst.SetRange(Type, lo_re_WhseOutput.Type);
                 WhseRqst.SetRange("Location Code", lo_re_WhseOutput."Location Code");
                 WhseRqst.SetRange("Source Type", lo_re_WhseOutput."Source Type");
@@ -736,19 +716,17 @@ codeunit 50116 INHGetSourceDocOutbound
                     //IF (NOT (DT2DATE(lo_re_SalesHdr."Last Release") IN [WORKDATE,CALCDATE('<-1D>',WORKDATE)])) AND
                     //   (NOT lo_re_SalesHdr."Skip CreditLimitCheck")
                     //THEN BEGIN
-                    if not lo_re_SalesHdr."Skip CreditLimitCheck" then begin
-                        if lo_re_SalesHdr."Promised Delivery Date" > CalcDate('<+1D>', WorkDate) then begin
-                            lo_bo_CheckCreditLimit := true;
-                        end;
-                        if not lo_bo_CheckCreditLimit then begin
-                            if not (DT2Date(lo_re_SalesHdr."Last Release") in [WorkDate, CalcDate('<-1D>', WorkDate)]) then begin
-                                lo_bo_CheckCreditLimit := true;
-                            end;
-                        end;
-                    end;
+                    // if not lo_re_SalesHdr."Skip CreditLimitCheck" then begin
+                    //     if lo_re_SalesHdr."Promised Delivery Date" > CalcDate('<+1D>', WorkDate) then begin
+                    //         lo_bo_CheckCreditLimit := true;
+                    //     end;
+                    //     if not lo_bo_CheckCreditLimit then begin
+                    //         if not (DT2Date(lo_re_SalesHdr."Last Release") in [WorkDate, CalcDate('<-1D>', WorkDate)]) then begin
+                    //             lo_bo_CheckCreditLimit := true;
+                    //         end;
+                    //     end;
+                    // end;
                     if lo_bo_CheckCreditLimit then begin
-                        //STOP  B43°.4 ---------------------------------
-                        //Währung berücksichtigen
                         lo_re_InitTable.Get(CompanyName);
                         lo_re_InitTableForeign.Get(lo_re_WhseOutput.Company);
                         if lo_re_SalesHdr."Currency Code" = '' then
@@ -757,119 +735,111 @@ codeunit 50116 INHGetSourceDocOutbound
                             if lo_re_SalesHdr."Currency Code" = lo_re_InitTable."Eigener Währungscode" then
                                 lo_re_SalesHdr."Currency Code" := '';
 
-                        lo_fo_CustCheckCreditLimit.fnk_SetForeignCompany(lo_re_WhseOutput.Company);
-                        lo_fo_CustCheckCreditLimit.fnk_SetUseCurrentOrderNextShipInCalc(true);   //B43°.4
-                        if lo_re_SalesHdr."Currency Factor" = 0 then lo_re_SalesHdr."Currency Factor" := 1;   //B43°.2
-                        if lo_fo_CustCheckCreditLimit.SalesHeaderShowWarning(lo_re_SalesHdr) then begin
-                            lo_cu_CustCheckCrLimit.fnk_CreditLimitExceeded(lo_re_SalesHdr."No.", lo_re_WhseOutput.Company);
-                        end;
+                        //     lo_fo_CustCheckCreditLimit.fnk_SetForeignCompany(lo_re_WhseOutput.Company);
+                        //     lo_fo_CustCheckCreditLimit.fnk_SetUseCurrentOrderNextShipInCalc(true);
+                        //     if lo_re_SalesHdr."Currency Factor" = 0 then lo_re_SalesHdr."Currency Factor" := 1;
+                        //     if lo_fo_CustCheckCreditLimit.SalesHeaderShowWarning(lo_re_SalesHdr) then begin
+                        //         lo_cu_CustCheckCrLimit.fnk_CreditLimitExceeded(lo_re_SalesHdr."No.", lo_re_WhseOutput.Company);
+                        //     end;
+                        // end;
+                        // lo_cu_PrePaymentPlanMgmt.fnk_CheckIfOrderIsBlocked(lo_re_SalesHdr."No.", true, true);   //C91°
                     end;
-                    lo_cu_PrePaymentPlanMgmt.fnk_CheckIfOrderIsBlocked(lo_re_SalesHdr."No.", true, true);   //C91°
-                end;
-                //STOP  B43°.1 ---------------------------------
+                    //STOP  B43°.1 ---------------------------------
 
-                lo_rp_ICGetSourceDocuments.SetOneCreatedShptHeader(WhseShptHeader);
+                    // lo_rp_ICGetSourceDocuments.SetOneCreatedShptHeader(WhseShptHeader);
+                    //START A08°.2 ---------------------------------
+                    //    lo_re_WhseOutput.MARKEDONLY(TRUE);
+                    //    IF NOT lo_re_WhseOutput.FINDFIRST THEN BEGIN
+                    //      lo_re_WhseOutput.MARKEDONLY(FALSE);
+                    //      lo_re_WhseOutput.SETRECFILTER;
+                    //    END;
+                    lo_re_WhseOutput.SetRange(Company, lo_re_WhseOutput.Company);
+                    lo_re_WhseOutput.SetRange(Type, lo_re_WhseOutput.Type);
+                    lo_re_WhseOutput.SetRange("Location Code", lo_re_WhseOutput."Location Code");
+                    lo_re_WhseOutput.SetRange("Source Type", lo_re_WhseOutput."Source Type");
+                    lo_re_WhseOutput.SetRange("Source Subtype", lo_re_WhseOutput."Source Subtype");
+                    lo_re_WhseOutput.SetRange("Source No.", lo_re_WhseOutput."Source No.");
+                    //STOP  A08°.2 ---------------------------------
+
+                    // lo_rp_ICGetSourceDocuments.UseRequestPage(false);
+                    // lo_rp_ICGetSourceDocuments.SetTableView(lo_re_WhseOutput);
+                    // lo_rp_ICGetSourceDocuments.RunModal;
+
+                    "Document Status" := GetDocumentStatus(0);
+                    Modify;
+                end;
+
                 //START A08°.2 ---------------------------------
-                //    lo_re_WhseOutput.MARKEDONLY(TRUE);
-                //    IF NOT lo_re_WhseOutput.FINDFIRST THEN BEGIN
-                //      lo_re_WhseOutput.MARKEDONLY(FALSE);
-                //      lo_re_WhseOutput.SETRECFILTER;
-                //    END;
-                lo_re_WhseOutput.SetRange(Company, lo_re_WhseOutput.Company);
-                lo_re_WhseOutput.SetRange(Type, lo_re_WhseOutput.Type);
-                lo_re_WhseOutput.SetRange("Location Code", lo_re_WhseOutput."Location Code");
-                lo_re_WhseOutput.SetRange("Source Type", lo_re_WhseOutput."Source Type");
-                lo_re_WhseOutput.SetRange("Source Subtype", lo_re_WhseOutput."Source Subtype");
-                lo_re_WhseOutput.SetRange("Source No.", lo_re_WhseOutput."Source No.");
-                //STOP  A08°.2 ---------------------------------
-
-                lo_rp_ICGetSourceDocuments.UseRequestPage(false);
-                lo_rp_ICGetSourceDocuments.SetTableView(lo_re_WhseOutput);
-                lo_rp_ICGetSourceDocuments.RunModal;
-
-                "Document Status" := GetDocumentStatus(0);
-                Modify;
-            end;
-
-            //START A08°.2 ---------------------------------
-            //Sicherheitsabfrage; Problem sollte durch Anpassung oben behoben sein
-            lo_re_WhseShptLine.Reset;
-            lo_re_WhseShptLine.SetRange(lo_re_WhseShptLine."No.", "No.");
-            if lo_re_WhseShptLine.FindSet(false, false) then begin
-                repeat
-                    if lo_co_PrevSourceNo <> '' then begin
-                        if lo_re_WhseShptLine."Source No." <> lo_co_PrevSourceNo then begin
-                            Error(TextMultipleSourceNos, lo_co_PrevSourceNo, lo_re_WhseShptLine."Source No.");
+                //Sicherheitsabfrage; Problem sollte durch Anpassung oben behoben sein
+                lo_re_WhseShptLine.Reset;
+                lo_re_WhseShptLine.SetRange(lo_re_WhseShptLine."No.", "No.");
+                if lo_re_WhseShptLine.FindSet(false, false) then begin
+                    repeat
+                        if lo_co_PrevSourceNo <> '' then begin
+                            if lo_re_WhseShptLine."Source No." <> lo_co_PrevSourceNo then begin
+                                Error(TextMultipleSourceNos, lo_co_PrevSourceNo, lo_re_WhseShptLine."Source No.");
+                            end;
                         end;
-                    end;
-                    lo_co_PrevSourceNo := lo_re_WhseShptLine."Source No.";
-                until lo_re_WhseShptLine.Next = 0;
-            end;
-            //STOP  A08°.2 ---------------------------------
-
-            //START C54° ---------------------------------
-            CalcFields("Source Document", "Source No.");
-            if "Source Document" = "Source Document"::"Sales Order" then begin
-                lo_re_SalesHdrView.SetRange("Document Type", lo_re_SalesHdrView."Document Type"::Order);
-                lo_re_SalesHdrView.SetRange("No.", "Source No.");
-                if lo_re_SalesHdrView.FindFirst then begin
-                    if lo_re_SalesHdrView."letzte Änderung von" <> '' then begin
-                        "Person Responsible" := lo_re_SalesHdrView."letzte Änderung von";
-                    end else begin
-                        "Person Responsible" := lo_re_SalesHdrView."Sachbearbeiter(Telefon)";
-                    end;
-                    "Shipment Date" := lo_re_SalesHdrView."Promised Delivery Date";
+                        lo_co_PrevSourceNo := lo_re_WhseShptLine."Source No.";
+                    until lo_re_WhseShptLine.Next = 0;
                 end;
-            end else
-                if "Source Document" = "Source Document"::"Outbound Transfer" then begin
-                    if lo_re_TransHdr.Get("Source No.") then begin
-                        "Person Responsible" := lo_re_TransHdr.Sachbearbeiter;
-                    end;
+
+                // CalcFields("Source Document", "Source No.");
+                // if "Source Document" = "Source Document"::"Sales Order" then begin
+                //     lo_re_SalesHdrView.SetRange("Document Type", lo_re_SalesHdrView."Document Type"::Order);
+                //     lo_re_SalesHdrView.SetRange("No.", "Source No.");
+                //     if lo_re_SalesHdrView.FindFirst then begin
+                //         if lo_re_SalesHdrView."letzte Änderung von" <> '' then begin
+                //             "Person Responsible" := lo_re_SalesHdrView."letzte Änderung von";
+                //         end else begin
+                //             "Person Responsible" := lo_re_SalesHdrView."Sachbearbeiter(Telefon)";
+                //         end;
+                //         "Shipment Date" := lo_re_SalesHdrView."Promised Delivery Date";
+                //     end;
+                // end else
+                //     if "Source Document" = "Source Document"::"Outbound Transfer" then begin
+                //         if lo_re_TransHdr.Get("Source No.") then begin
+                //             "Person Responsible" := lo_re_TransHdr.Sachbearbeiter;
+                //         end;
+                //     end;
+                "Assignment Date" := Today;
+                "Assignment Time" := Time;
+                Modify(true);
+
+                lo_re_WhseShptLine.Reset;
+                lo_re_WhseShptLine.SetRange(lo_re_WhseShptLine."No.", "No.");
+                // if lo_re_WhseShptLine.Find('-') then begin
+                //     "Shipping Agent Code" := lo_re_WhseShptLine."Shipping Agent Code";
+                //     Modify;
+                // end;
+
+                if "Shipping Agent Code" = '' then begin
+                    lo_re_InitTable.Get(CompanyName);
+                    "Shipping Agent Code" := lo_re_InitTable.Init_Zusteller;
+                    Modify;
                 end;
-            "Assignment Date" := Today;
-            "Assignment Time" := Time;
-            Modify(true);
-            //STOP  C54° ---------------------------------
 
-            lo_re_WhseShptLine.Reset;
-            lo_re_WhseShptLine.SetRange(lo_re_WhseShptLine."No.", "No.");
-            if lo_re_WhseShptLine.Find('-') then begin
-                "Shipping Agent Code" := lo_re_WhseShptLine."Shipping Agent Code";
-                Modify;
+                // CalcFields("Source Document", "Source No.");
+                // case "Source Document" of
+                //     "Source Document"::"Outbound Transfer",
+                //     "Source Document"::"Inbound Transfer":
+                //         begin
+                //             if lo_re_TransHdr.Get("Source No.") then begin
+                //                 Validate("Shipping Agent Code", lo_re_TransHdr."Shipping Agent Code");
+                //                 Modify(false);
+                //             end;
+                //         end;
+                // end;
+
+                Commit;
+                // lo_cu_ShippingNetMgt.fnk_ImportWarehouseShipment(WhseShptHeader."No.");
             end;
-
-            if "Shipping Agent Code" = '' then begin
-                lo_re_InitTable.Get(CompanyName);
-                "Shipping Agent Code" := lo_re_InitTable.Init_Zusteller;
-                Modify;
-            end;
-
-            CalcFields("Source Document", "Source No.");
-            case "Source Document" of
-                "Source Document"::"Outbound Transfer",
-                "Source Document"::"Inbound Transfer":
-                    begin
-                        if lo_re_TransHdr.Get("Source No.") then begin
-                            Validate("Shipping Agent Code", lo_re_TransHdr."Shipping Agent Code");
-                            Modify(false);
-                        end;
-                    end;
-            end;
-
-            //START C34°.6 ---------------------------------
-            Commit;
-            lo_cu_ShippingNetMgt.fnk_ImportWarehouseShipment(WhseShptHeader."No.");
-            //STOP  C34°.6 ---------------------------------
-
         end;
     end;
 
-    [Scope('Internal')]
-    procedure fnk_SetWhseOutput(var par_re_WhseOutput: Record WarehouseOutput)
+    procedure fnk_SetWhseOutput(var par_re_WhseOutput: Record INHWarehouseOutput)
     begin
-        //A08°.1
         re_WhseOutput := par_re_WhseOutput;
         bo_WhseOutputIsSet := true;
     end;
 }
-

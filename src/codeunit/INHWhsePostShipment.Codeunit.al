@@ -80,7 +80,7 @@ codeunit 50157 INHWhsePostShipment
         "+++LO_VAR_INHAUS+++": Boolean;
         lo_re_WarehouseOutput: Record WarehouseOutput;
         lo_cu_ICMgt: Codeunit ICMgt;
-        lo_cu_LogisticsMgt: Codeunit LogisticsMgt;
+        lo_cu_LogisticsMgt: Codeunit INHLogisticsMgt;
         lo_co_TransferSourceNo: Code[20];
     begin
         with WhseShptLine do begin

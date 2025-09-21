@@ -111,16 +111,16 @@ codeunit 50112 INHGenJnlPostBatch
     local procedure "Code"(var GenJnlLine: Record "Gen. Journal Line")
     var
         TempMarkedGenJnlLine: Record "Gen. Journal Line" temporary;
-        IntegrationService: Codeunit "Integration Service";
-        IntegrationManagement: Codeunit "Integration Management";
+        // IntegrationService: Codeunit "Integration Service";
+        // IntegrationManagement: Codeunit "Integration Management";
         RaiseError: Boolean;
     begin
         OnBeforeCode(GenJnlLine, PreviewMode, SuppressCommit);
 
         // let's force Api Enabled check.
         // this will disable integration related subscribers in case of disabled Api setup
-        BindSubscription(IntegrationService);
-        IntegrationManagement.ResetIntegrationActivated;
+        // BindSubscription(IntegrationService);
+        // IntegrationManagement.ResetIntegrationActivated;
 
         with GenJnlLine do begin
             SetRange("Journal Template Name", "Journal Template Name");
@@ -271,7 +271,7 @@ codeunit 50112 INHGenJnlPostBatch
             ClearMarks;
         end;
         UpdateAnalysisView.UpdateAll(0, true);
-        GenJnlBatch.OnMoveGenJournalBatch(GLReg.RecordId);
+        // GenJnlBatch.OnMoveGenJournalBatch(GLReg.RecordId);
         if not SuppressCommit then
             Commit;
 
@@ -886,14 +886,15 @@ codeunit 50112 INHGenJnlPostBatch
                        (("Bal. Account Type" in ["Bal. Account Type"::"G/L Account", "Account Type"::"Bank Account"]) and
                         ("Bal. Account No." <> ''))
                     then
-                        TestField("IC Partner G/L Acc. No.")
+                        Message('') //TestField("IC Partner G/L Acc. No.")
                     else
-                        if "IC Partner G/L Acc. No." <> '' then
-                            Error(Text031,
-                              "Line No.", FieldCaption("IC Partner G/L Acc. No."), FieldCaption("Account No."),
-                              FieldCaption("Bal. Account No."));
+                        ;
+                    // if "IC Partner G/L Acc. No." <> '' then
+                    //     Error(Text031,
+                    //       "Line No.", FieldCaption("IC Partner G/L Acc. No."), FieldCaption("Account No."),
+                    //       FieldCaption("Bal. Account No."));
                 end else
-                    TestField("IC Partner G/L Acc. No.", '');
+                    ;//TestField("IC Partner G/L Acc. No.", '');
             until Next = 0;
         end;
     end;
@@ -1258,7 +1259,7 @@ codeunit 50112 INHGenJnlPostBatch
     local procedure CheckRestrictions(var GenJournalLine: Record "Gen. Journal Line")
     begin
         if not PreviewMode then
-            GenJournalLine.OnCheckGenJournalLinePostRestrictions;
+            ;// GenJournalLine.OnCheckGenJournalLinePostRestrictions;
     end;
 
     local procedure GetGenJnlLineParameters(var PaymentApplication: Boolean; var PaymentBalanceVAT: Boolean; GenJnlLine: Record "Gen. Journal Line")
@@ -1363,9 +1364,9 @@ codeunit 50112 INHGenJnlPostBatch
         CheckAllocations(GenJournalLineToUpdate);
         GenJnlLine5.Copy(GenJournalLineToUpdate);
         if not PostingAfterCurrentFiscalYearConfirmed then
-            PostingAfterCurrentFiscalYearConfirmed :=
-              PostingSetupMgt.ConfirmPostingAfterCurrentCalendarDate(
-                ConfirmPostingAfterCurrentPeriodQst, GenJnlLine5."Posting Date");
+            // PostingAfterCurrentFiscalYearConfirmed :=
+            //   PostingSetupMgt.ConfirmPostingAfterCurrentCalendarDate(
+            //     ConfirmPostingAfterCurrentPeriodQst, GenJnlLine5."Posting Date");
         PrepareGenJnlLineAddCurr(GenJnlLine5);
         GenJnlCheckLine.RunCheck(GenJnlLine5);
         CheckRestrictions(GenJnlLine5);

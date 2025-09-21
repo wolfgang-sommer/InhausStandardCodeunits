@@ -16,7 +16,7 @@ codeunit 50122 INHItemJnlPostPrint
     begin
         ItemJnlLine.Copy(Rec);
         Code;
-        Copy(ItemJnlLine);
+        Rec.Copy(ItemJnlLine);
     end;
 
     var

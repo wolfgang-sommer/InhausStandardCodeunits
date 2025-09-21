@@ -159,15 +159,10 @@ codeunit 50178 INHCopyDocumentMgt
         CrMemoCancellationMsg: Label 'Cancellation of credit memo %1.', Comment = '%1 = Document No.';
         CopyExtText: Boolean;
         CopyJobData: Boolean;
-        "+++OPplus+++": Integer;
-        OPPLicenseInfo: Codeunit "OPP License Information";
-        PmtTools: Codeunit "OPP Pmt. Export Tools";
-        OPplusTriggerMgt: Codeunit "OPP Trigger Management";
-        "+++VAR_INHAUS+++": Boolean;
         re_LineNoBuffer: Record "Line Number Buffer" temporary;
         re_LineNoBufferGroupPrice: Record "Line Number Buffer" temporary;
         re_RealFromLineNoBuffer: Record "Line Number Buffer" temporary;
-        cu_DialogMgt: Codeunit DialogMgt;
+        cu_DialogMgt: Codeunit INHDialogMgt;
         bo_AufpreisLineNo: Boolean;
         bo_WriteOrderInfoLines: Boolean;
         "+++TE_INHAUS+++": ;
@@ -283,8 +278,8 @@ codeunit 50178 INHCopyDocumentMgt
         lo_re_Cust: Record Customer;
         lo_re_FromSalesInvLine: Record "Sales Invoice Line";
         lo_re_OldSalesHeader: Record "Sales Header";
-        lo_re_ShptDateGrpDoc: Record "Shipment Date Group Doc.";
-        lo_cu_SalesMgt: Codeunit SalesMgt;
+        // lo_re_ShptDateGrpDoc: Record INHShipmentDateGroupDoc;
+        lo_cu_SalesMgt: Codeunit INHSalesMgt;
         lo_co_ShipNo: Code[20];
         lo_bo_JustOneShptInInv: Boolean;
     begin
@@ -318,7 +313,7 @@ codeunit 50178 INHCopyDocumentMgt
                 if IncludeHeader then
                     if not ToSalesLine.IsEmpty then begin
                         Commit;
-                        if not ConfirmManagement.ConfirmProcess(
+                        if not ConfirmManagement.GetResponse(
                              StrSubstNo(DeleteLinesQst, "Document Type", "No."), true)
                         then
                             exit;
@@ -427,12 +422,12 @@ codeunit 50178 INHCopyDocumentMgt
         OnAfterCopySalesDocument(
           FromDocType, FromDocNo, ToSalesHeader, FromDocOccurrenceNo, FromDocVersionNo, IncludeHeader, RecalculateLines, MoveNegLines);
 
-        lo_cu_SalesMgt.fnk_Cu6620_OnAfterCopySalesDocument(FromDocType, FromDocNo, ToSalesHeader, lo_re_OldSalesHeader, IncludeHeader, RecalculateLines);   //C27°
+        // lo_cu_SalesMgt.fnk_Cu6620_OnAfterCopySalesDocument(FromDocType, FromDocNo, ToSalesHeader, lo_re_OldSalesHeader, IncludeHeader, RecalculateLines);   //C27°
         //START B17° ---------------------------------
-        lo_cu_SalesMgt.fnk_HandleGroupPriceAfterCopy(SalesHeaderDocType(FromDocType), FromDocNo, ToSalesHeader."Document Type",
-                                                     ToSalesHeader."No.", re_LineNoBuffer, re_LineNoBufferGroupPrice);
+        // lo_cu_SalesMgt.fnk_HandleGroupPriceAfterCopy(SalesHeaderDocType(FromDocType), FromDocNo, ToSalesHeader."Document Type",
+                                                    //  ToSalesHeader."No.", re_LineNoBuffer, re_LineNoBufferGroupPrice);
         //STOP  B17° ---------------------------------
-        cu_DialogMgt.fnk_CloseDialog;   //Axx°
+        cu_DialogMgt.CloseDialog();   //Axx°
     end;
 
     local procedure CopySalesDocSalesLine(FromSalesHeader: Record "Sales Header"; var ToSalesHeader: Record "Sales Header"; var LinesNotCopied: Integer; NextLineNo: Integer)
@@ -586,8 +581,8 @@ codeunit 50178 INHCopyDocumentMgt
         "+++LO_VAR_INHAUS+++": Boolean;
         lo_re_Cust: Record Customer;
         lo_re_FromSalesInvLine: Record "Sales Invoice Line";
-        lo_re_ShptDateGrpDoc: Record "Shipment Date Group Doc.";
-        lo_cu_SalesMgt: Codeunit SalesMgt;
+        lo_re_ShptDateGrpDoc: Record INHShipmentDateGroupDoc;
+        lo_cu_SalesMgt: Codeunit INHSalesMgt;
         lo_co_ShipNo: Code[20];
         lo_bo_JustOneShptInInv: Boolean;
     begin
@@ -675,34 +670,23 @@ codeunit 50178 INHCopyDocumentMgt
                 SalesDocType::"Posted Shipment":
                     begin
                         if "Document Type" = "Document Type"::"Return Order" then begin
-                            Validate("Gutschrift zu Belegart", "Gutschrift zu Belegart"::"geb. Lieferschein");
-                            Validate("Gutschrift zu Belegnr.", FromDocNo);
+                            Validate("INHGutschrift zu Belegart", "INHGutschrift zu Belegart"::"geb. Lieferschein");
+                            Validate("INHGutschrift zu Belegnr.", FromDocNo);
                         end;
                     end;
                 SalesDocType::"Posted Invoice":
                     begin
                         if "Document Type" = "Document Type"::"Return Order" then begin
-                            Validate("Gutschrift zu Belegart", "Gutschrift zu Belegart"::"geb. Rechnung");
-                            Validate("Gutschrift zu Belegnr.", FromDocNo);
+                            Validate("INHGutschrift zu Belegart", "INHGutschrift zu Belegart"::"geb. Rechnung");
+                            Validate("INHGutschrift zu Belegnr.", FromDocNo);
                             //Wenn nur 1 Lieferschein in Rechnung, dann bestimmte Infos auslesen
                             lo_re_FromSalesInvLine.Reset;
                             lo_re_FromSalesInvLine.SetRange("Document No.", FromSalesInvHeader."No.");
                             lo_re_FromSalesInvLine.SetRange(Type, lo_re_FromSalesInvLine.Type::Item);
                             lo_re_FromSalesInvLine.SetFilter("No.", '<>%1', '');
-                            if lo_re_FromSalesInvLine.FindSet(false, false) then begin
+                            if lo_re_FromSalesInvLine.FindSet() then begin
                                 lo_bo_JustOneShptInInv := true;
                                 repeat
-                                    if lo_bo_JustOneShptInInv then begin
-                                        if lo_re_FromSalesInvLine.IC_Lieferschein <> '' then begin
-                                            if lo_co_ShipNo = '' then begin
-                                                lo_co_ShipNo := lo_re_FromSalesInvLine.IC_Lieferschein;
-                                            end else begin
-                                                if lo_co_ShipNo <> lo_re_FromSalesInvLine.IC_Lieferschein then begin
-                                                    lo_bo_JustOneShptInInv := false;
-                                                end;
-                                            end;
-                                        end;
-                                    end;
                                 until (lo_re_FromSalesInvLine.Next = 0) or (not lo_bo_JustOneShptInInv);
                             end;
                             if lo_bo_JustOneShptInInv then begin
@@ -710,7 +694,7 @@ codeunit 50178 INHCopyDocumentMgt
                                 lo_re_FromSalesInvLine.SetRange("Document No.", FromSalesInvHeader."No.");
                                 lo_re_FromSalesInvLine.SetFilter(Description, '%1', 'Kommission:*');
                                 if lo_re_FromSalesInvLine.FindFirst then begin
-                                    "Kom." := lo_re_FromSalesInvLine."Description 2";
+                                    "INHKom." := lo_re_FromSalesInvLine."Description 2";
                                 end;
                                 lo_re_FromSalesInvLine.SetFilter(Description, '%1', 'Ihre Referenz:*');
                                 if lo_re_FromSalesInvLine.FindFirst then begin
@@ -729,8 +713,8 @@ codeunit 50178 INHCopyDocumentMgt
             Reserve := lo_re_Cust.Reserve;
             //STOP  C03° ---------------------------------
             //START A65° ---------------------------------
-            if FromSalesHeader.Angebotsart = FromSalesHeader.Angebotsart::"GU-Vorlage" then begin
-                Angebotsart := Angebotsart::"GU-Angebot";
+            if FromSalesHeader.INHAngebotsart = FromSalesHeader.INHAngebotsart::"GU-Vorlage" then begin
+                INHAngebotsart := INHAngebotsart::"GU-Angebot";
                 "GU-Rabatt für Standardartikel" := FromSalesHeader."GU-Rabatt für Standardartikel";
                 "GU-Rabatt für Austauschartikel" := FromSalesHeader."GU-Rabatt für Austauschartikel";
             end;
@@ -739,9 +723,8 @@ codeunit 50178 INHCopyDocumentMgt
             if "Location Code" = '' then begin
                 "Location Code" := OldSalesHeader."Location Code";
             end;
-            if ("Document Type" in ["Document Type"::Quote, "Document Type"::Order]) and ("Document Type" <> FromSalesHeader."Document Type") then begin
-                Auftragsart := OldSalesHeader.Auftragsart;
-            end;
+            if ("Document Type" in ["Document Type"::Quote, "Document Type"::Order]) and ("Document Type" <> FromSalesHeader."Document Type") then
+                INHAuftragsart := OldSalesHeader.INHAuftragsart;
             //STOP  Axx° ---------------------------------
             if MoveNegLines or IncludeHeader then
                 Validate("Location Code");
@@ -894,7 +877,7 @@ codeunit 50178 INHCopyDocumentMgt
                 if IncludeHeader then
                     if ToPurchLine.FindFirst then begin
                         Commit;
-                        if not ConfirmManagement.ConfirmProcess(
+                        if not ConfirmManagement.GetResponse(
                              StrSubstNo(DeleteLinesQst, "Document Type", "No."), true)
                         then
                             exit;
@@ -999,7 +982,7 @@ codeunit 50178 INHCopyDocumentMgt
         OnAfterCopyPurchaseDocument(
           FromDocType, FromDocNo, ToPurchHeader, FromDocOccurrenceNo, FromDocVersionNo, IncludeHeader, RecalculateLines, MoveNegLines);
 
-        cu_DialogMgt.fnk_CloseDialog;   //Axx°
+        cu_DialogMgt.CloseDialog();   //Axx°
     end;
 
     local procedure CopyPurchDocPurchLine(FromPurchHeader: Record "Purchase Header"; ToPurchHeader: Record "Purchase Header"; var LinesNotCopied: Integer; NextLineNo: Integer)
@@ -1195,12 +1178,12 @@ codeunit 50178 INHCopyDocumentMgt
 
             CopyFieldsFromOldPurchHeader(ToPurchHeader, OldPurchHeader);
             OnAfterCopyFieldsFromOldPurchHeader(ToPurchHeader, OldPurchHeader, MoveNegLines, IncludeHeader);
-            if RecalculateLines then
-                CreateDim(
-                  DATABASE::Vendor, "Pay-to Vendor No.",
-                  DATABASE::"Salesperson/Purchaser", "Purchaser Code",
-                  DATABASE::Campaign, "Campaign No.",
-                  DATABASE::"Responsibility Center", "Responsibility Center");
+            // if RecalculateLines then
+            //     CreateDim(
+            //       DATABASE::Vendor, "Pay-to Vendor No.",
+            //       DATABASE::"Salesperson/Purchaser", "Purchaser Code",
+            //       DATABASE::Campaign, "Campaign No.",
+            //       DATABASE::"Responsibility Center", "Responsibility Center");
             "No. Printed" := 0;
             "Applies-to Doc. Type" := "Applies-to Doc. Type"::" ";
             "Applies-to Doc. No." := '';
@@ -1568,7 +1551,7 @@ codeunit 50178 INHCopyDocumentMgt
         CopyPostedDeferral := false;
         DeferralDocType := DeferralUtilities.GetSalesDeferralDocType;
         if RecalculateLines and not FromSalesLine."System-Created Entry"
-          and (not FromSalesLine."Div. Artikel")   //Axx°
+          and (not FromSalesLine.INHMiscItem)   //Axx°
         then begin
             RecalculateSalesLine(ToSalesHeader, ToSalesLine, FromSalesHeader, FromSalesLine, CopyThisLine);
             if IsDeferralToBeCopied(DeferralDocType, ToSalesLine."Document Type", FromSalesDocType) then
@@ -3040,7 +3023,7 @@ codeunit 50178 INHCopyDocumentMgt
                     re_RealFromLineNoBuffer."Old Line Number" := FromSalesCrMemoLine."Line No.";
                     re_RealFromLineNoBuffer."New Line Number" := FromSalesLineBuf."Line No.";
                     re_RealFromLineNoBuffer.Insert;
-                    //STOP  Axx°.7 ---------------------------------
+                //STOP  Axx°.7 ---------------------------------
                 until Next = 0;
 
         // Create sales line from buffer
@@ -5430,7 +5413,7 @@ codeunit 50178 INHCopyDocumentMgt
 
         if ((ToSalesHeader."Language Code" <> FromSalesHeaderArchive."Language Code") or RecalculateLines) and
            (FromSalesLineArchive."Attached to Line No." <> 0)
-           and (FromSalesLineArchive."Attached to - Type" <> FromSalesLineArchive."Attached to - Type"::Variant)   //B44°
+           and (FromSalesLineArchive."INHAttached to - Type" <> FromSalesLineArchive."INHAttached to - Type"::Variant)   //B44°
         then
             exit(false);
 
@@ -5561,7 +5544,7 @@ codeunit 50178 INHCopyDocumentMgt
         // !!! Achtung: bei Änderungen auch CopyPurchLine beachten   //Axx°
         if ((ToPurchHeader."Language Code" <> FromPurchHeaderArchive."Language Code") or RecalculateLines) and
            (FromPurchLineArchive."Attached to Line No." <> 0)
-           and (FromPurchLineArchive."Attached to - Type" <> FromPurchLineArchive."Attached to - Type"::Variant)   //B44°
+           and (FromPurchLineArchive."INHAttached to - Type" <> FromPurchLineArchive."INHAttached to - Type"::Variant)   //B44°
         then
             exit(false);
 
@@ -6448,7 +6431,7 @@ codeunit 50178 INHCopyDocumentMgt
             if (PostingNo <> '') and (OldPostingDate <> NewPostingDate) then
                 if NoSeries.Get(PostingNoSeries) then
                     if NoSeries."Date Order" then
-                        exit(ConfirmManagement.ConfirmProcess(DiffPostDateOrderQst, true));
+                        exit(ConfirmManagement.GetResponseDiffPostDateOrderQst, true));
         exit(true)
     end;
 
@@ -8256,11 +8239,11 @@ codeunit 50178 INHCopyDocumentMgt
 
     local procedure fnk_CheckIfCopyLine(par_re_SalesLine: Record "Sales Line"; par_bo_CopyThisLine: Boolean) rv_bo_CopyThisLine: Boolean
     var
-        lo_cu_Benutzerberechtigungen: Codeunit UserRightsMgt;
+        lo_cu_Benutzerberechtigungen: Codeunit INHUserRightsMgt;
     begin
         //B12°
         rv_bo_CopyThisLine := par_bo_CopyThisLine;
-        if not lo_cu_Benutzerberechtigungen.fnk_UserHasRole('SUPER') then begin
+        if not lo_cu_Benutzerberechtigungen.UserHasRole('SUPER') then begin
             if (par_re_SalesLine.Type = par_re_SalesLine.Type::"G/L Account") and
                ((par_re_SalesLine."No." = '3291') or (par_re_SalesLine."No." = '2031'))
             then begin
@@ -8269,42 +8252,14 @@ codeunit 50178 INHCopyDocumentMgt
         end;
     end;
 
-    local procedure fnk_ClearSalesICFields(var NewSalesLine: Record "Sales Line")
-    begin
-        //Axx°
-        with NewSalesLine do begin
-            Clear(IC_Bestellung);
-            Clear(IC_BestellZeile);
-            Clear(IC_Auftrag);
-            Clear(IC_AuftragZeile);
-            Clear(IC_Zollwert);
-            Clear(IC_Lieferschein);
-            Clear(IC_LieferZeile);
-        end
-    end;
-
-    local procedure fnk_ClearPurchICFields(var NewPurchLine: Record "Purchase Line")
-    begin
-        //Axx°
-        with NewPurchLine do begin
-            Clear(IC_Bestellung);
-            Clear(IC_BestellZeile);
-            Clear(IC_Auftrag);
-            Clear(IC_AuftragZeile);
-            Clear(IC_Mandant);
-            Clear(IC_Lieferschein);
-            Clear(IC_LieferZeile);
-        end
-    end;
-
     local procedure fnk_OnBeforeCopySalesInvLinesToDoc(var ToSalesHeader: Record "Sales Header"; var FromSalesInvLine: Record "Sales Invoice Line")
     var
         lo_re_LineNoFilterBuffer: Record "Name/Value Buffer" temporary;
         lo_re_SalesHdr: Record "Sales Header";
         lo_re_SalesShptHdr: Record "Sales Shipment Header";
-        lo_cu_ApplicationMgtIH: Codeunit "ApplicationMgt IH";
-        lo_cu_DialogMgt: Codeunit DialogMgt;
-        lo_cu_GroupingMgt: Codeunit GroupingMgt;
+        lo_cu_ApplicationMgtIH: Codeunit INHApplicationMgt;
+        lo_cu_DialogMgt: Codeunit INHDialogMgt;
+        lo_cu_GroupingMgt: Codeunit INHGroupingMgt;
         lo_te_LineNoFilter: Text;
         lo_te_OrderNo: Text[30];
         lo_co_ItemNoFilter: Code[1024];
@@ -8313,56 +8268,51 @@ codeunit 50178 INHCopyDocumentMgt
         //Axx°.2
         with ToSalesHeader do begin
             if GuiAllowed then begin
-                if not lo_cu_ApplicationMgtIH.fnk_IsOnlineClient then begin   //C83°
-                    lo_te_OrderNo := lo_cu_DialogMgt.fnk_GetUserInput2('Auftragsnr./Lieferscheinnr.');
-                    lo_co_ItemNoFilter := lo_cu_DialogMgt.fnk_GetUserInput2('Artikelnr.-Filter');
-                end;   //C83°
                 if lo_te_OrderNo <> '' then begin
                     if UpperCase(CopyStr(lo_te_OrderNo, 1, 1)) = 'L' then begin
                         FromSalesInvLine.SetRange("Shipment No.", lo_te_OrderNo);
                     end else begin
-                        FromSalesInvLine.SetRange(Auftragsnummer, lo_te_OrderNo);
+                        FromSalesInvLine.SetRange(INHAuftragsnummer, lo_te_OrderNo);
                     end;
                     bo_WriteOrderInfoLines := true;
                     if ("Document Type" = "Document Type"::"Return Order") and IncludeHeader then begin
                         if lo_re_SalesHdr.Get(lo_re_SalesHdr."Document Type"::Order, lo_te_OrderNo) then begin
-                            "Kom." := lo_re_SalesHdr."Kom.";
+                            "INHKom." := lo_re_SalesHdr."INHKom.";
                             "Your Reference" := lo_re_SalesHdr."Your Reference";
-                            "Ihre Bestellnummer" := lo_re_SalesHdr."Ihre Bestellnummer";
-                            "Job No." := lo_re_SalesHdr."Job No.";
-                            "Kundenprojektnr." := lo_re_SalesHdr."Kundenprojektnr.";
+                            "INHIhre Bestellnummer" := lo_re_SalesHdr."INHIhre Bestellnummer";
+                            "INHJob No." := lo_re_SalesHdr."INHJob No.";
+                            "INHKundenprojektnr." := lo_re_SalesHdr."INHKundenprojektnr.";
                         end else
                             if lo_re_SalesShptHdr.Get(lo_te_OrderNo) then begin
-                                "Kom." := lo_re_SalesShptHdr."Kom.";
+                                "INHKom." := lo_re_SalesShptHdr."INHKom.";
                                 "Your Reference" := lo_re_SalesShptHdr."Your Reference";
-                                "Ihre Bestellnummer" := lo_re_SalesShptHdr."Ihre Bestellnummer";
-                                "Job No." := lo_re_SalesShptHdr."Job No.";
-                                "Kundenprojektnr." := lo_re_SalesShptHdr."Kundenprojektnr.";
+                                "INHIhre Bestellnummer" := lo_re_SalesShptHdr."INHIhre Bestellnummer";
+                                "INHJob No." := lo_re_SalesShptHdr.INHJobNo;
+                                "INHKundenprojektnr." := lo_re_SalesShptHdr."INHKundenprojektnr.";
                             end;
                     end;
                 end;
                 if lo_co_ItemNoFilter <> '' then begin
                     FromSalesInvLine.SetFilter("No.", lo_co_ItemNoFilter);
                     //START C95° ---------------------------------
-                    if FromSalesInvLine.FindSet(false, false) then begin
+                    if FromSalesInvLine.FindSet() then begin
                         repeat
                             FromSalesInvLine.Mark(true);
-                            if lo_cu_GroupingMgt.fnk_GetLineNoFilterForGroupHeaderT113(FromSalesInvLine, lo_te_LineNoFilter) then begin
-                                i += 1;
-                                lo_re_LineNoFilterBuffer.ID := i;
-                                lo_re_LineNoFilterBuffer.Value := lo_te_LineNoFilter;
-                                lo_re_LineNoFilterBuffer.Insert(false);
-                            end;
+                            // if lo_cu_GroupingMgt.GetLineNoFilterForGroupHeaderT113(FromSalesInvLine, lo_te_LineNoFilter) then begin
+                            //     i += 1;
+                            //     lo_re_LineNoFilterBuffer.ID := i;
+                            //     lo_re_LineNoFilterBuffer.Value := lo_te_LineNoFilter;
+                            //     lo_re_LineNoFilterBuffer.Insert(false);
+                            // end;
                         until FromSalesInvLine.Next = 0;
-                        if lo_re_LineNoFilterBuffer.FindSet(false, false) then begin
+                        if lo_re_LineNoFilterBuffer.FindSet() then begin
                             FromSalesInvLine.SetRange("No.");
                             repeat
                                 FromSalesInvLine.SetFilter("Line No.", lo_re_LineNoFilterBuffer.Value);
-                                if FromSalesInvLine.FindSet(false, false) then begin
+                                if FromSalesInvLine.FindSet() then
                                     repeat
                                         FromSalesInvLine.Mark(true);
                                     until FromSalesInvLine.Next = 0;
-                                end;
                             until lo_re_LineNoFilterBuffer.Next = 0;
                             FromSalesInvLine.SetRange("Line No.");
                             FromSalesInvLine.MarkedOnly(true);
@@ -8377,16 +8327,15 @@ codeunit 50178 INHCopyDocumentMgt
 
     local procedure fnk_OnBeforeInsertPurchLine(var ToPurchHeader: Record "Purchase Header"; var ToPurchLine: Record "Purchase Line"; var FromPurchHeader: Record "Purchase Header"; var FromPurchLine: Record "Purchase Line"; var CopyThisLine: Boolean)
     var
-        lo_cu_VariantMgt: Codeunit VariantMgt;
+        lo_cu_VariantMgt: Codeunit INHVariantMgt;
     begin
         // !!! Achtung: bei Änderungen auch fnk_OnBeforeInsertArchPurchLine beachten   //Axx°
 
         //START B44° ---------------------------------
         // Variante kopieren
-        ToPurchLine."Attached to - Type" := FromPurchLine."Attached to - Type";
-        if CopyThisLine then begin
-            lo_cu_VariantMgt.fnk_CopyPurchDLV(FromPurchLine, ToPurchLine);
-        end;
+        ToPurchLine."INHINHAttached to - Type" := FromPurchLine."INHINHAttached to - Type";
+        if CopyThisLine then
+            ;//lo_cu_VariantMgt.CopyPurchDLV(FromPurchLine, ToPurchLine);
         //STOP  B44° ---------------------------------
 
         // //START C54° ---------------------------------
@@ -8402,31 +8351,31 @@ codeunit 50178 INHCopyDocumentMgt
         // END;
         // //STOP  C54° ---------------------------------
 
-        cu_DialogMgt.fnk_UpdateNewPosition(Format(ToPurchLine.Type) + ' ' + ToPurchLine."No.", false);
+        cu_DialogMgt.UpdateNewPosition(Format(ToPurchLine.Type) + ' ' + ToPurchLine."No.", false);
     end;
 
     local procedure fnk_OnBeforeInsertArchPurchLine(var ToPurchHeader: Record "Purchase Header"; var ToPurchLine: Record "Purchase Line"; var FromArchPurchHeader: Record "Purchase Header Archive"; var FromArchPurchLine: Record "Purchase Line Archive"; var CopyThisLine: Boolean)
     var
-        lo_cu_VariantMgt: Codeunit VariantMgt;
+        lo_cu_VariantMgt: Codeunit INHVariantMgt;
     begin
         // !!! Achtung: bei Änderungen auch fnk_OnBeforeInsertPurchLine beachten   //Axx°
         //TODO evtl: mit fnk_OnBeforeInsertPurchLine zusammenlegen ?
 
         //START B44° ---------------------------------
         // Variante kopieren
-        ToPurchLine."Attached to - Type" := FromArchPurchLine."Attached to - Type";
+        ToPurchLine."INHINHAttached to - Type" := FromArchPurchLine."INHINHAttached to - Type";
         if CopyThisLine then begin
-            lo_cu_VariantMgt.fnk_RestorePurchDLV(FromArchPurchLine, ToPurchLine);
+            // lo_cu_VariantMgt.fnk_RestorePurchDLV(FromArchPurchLine, ToPurchLine);
         end;
         //STOP  B44° ---------------------------------
 
-        cu_DialogMgt.fnk_UpdateNewPosition(Format(ToPurchLine.Type) + ' ' + ToPurchLine."No.", false);
+        cu_DialogMgt.UpdateNewPosition(Format(ToPurchLine.Type) + ' ' + ToPurchLine."No.", false);
     end;
 
     local procedure fnk_OnBeforeInsertSalesLine(var ToSalesHeader: Record "Sales Header"; var ToSalesLine: Record "Sales Line"; var FromSalesHeader: Record "Sales Header"; var FromSalesLine: Record "Sales Line"; var CopyThisLine: Boolean)
     var
-        lo_re_InitTable: Record "Init-Tabelle";
-        lo_cu_VariantMgt: Codeunit VariantMgt;
+        lo_re_InitTable: Record "INHInitTable";
+        lo_cu_VariantMgt: Codeunit INHVariantMgt;
     begin
         // !!! Achtung: bei Änderungen auch fnk_OnBeforeInsertArchSalesLine beachten   //Axx°
 
@@ -8436,26 +8385,23 @@ codeunit 50178 INHCopyDocumentMgt
         //STOP  Axx° ---------------------------------
 
         //START C11° ---------------------------------
-        if ToSalesLine."Webshop Discount" <> 0 then begin
-            if not (ToSalesHeader."Document Type" in [ToSalesHeader."Document Type"::"Credit Memo",
-                                                      ToSalesHeader."Document Type"::"Return Order"])
-            then begin
-                ToSalesLine.Validate("Webshop Discount", 0);
-            end;
-        end;
+        if ToSalesLine.INHWebshopDiscount <> 0 then
+            if not (ToSalesHeader."Document Type" in [ToSalesHeader."Document Type"::"Credit Memo",                                                      ToSalesHeader."Document Type"::"Return Order"])
+            then
+                ToSalesLine.Validate(INHWebshopDiscount, 0);
         //STOP  C11° ---------------------------------
 
         //START B44° ---------------------------------
         // Variante kopieren
-        ToSalesLine."Attached to - Type" := FromSalesLine."Attached to - Type";
+        ToSalesLine."INHINHAttached to - Type" := FromSalesLine."INHINHAttached to - Type";
         if CopyThisLine then begin
-            lo_cu_VariantMgt.fnk_CopySalesDLV(FromSalesLine, ToSalesLine);
+            // lo_cu_VariantMgt.fnk_CopySalesDLV(FromSalesLine, ToSalesLine);
         end;
         //STOP  B44° ---------------------------------
 
         //START Axx°.4 ---------------------------------
         if ToSalesLine."Document Type" = ToSalesLine."Document Type"::"Return Order" then begin
-            if (ToSalesLine.Type = ToSalesLine.Type::Item) and not FromSalesLine."Div. Artikel" then begin
+            if (ToSalesLine.Type = ToSalesLine.Type::Item) and not FromSalesLine.INHMiscItem then begin
                 lo_re_InitTable.Get(CompanyName);
                 ToSalesLine.Validate("Location Code", lo_re_InitTable.Init_Lagerortcode);
                 //    //START C54° ---------------------------------
@@ -8486,11 +8432,11 @@ codeunit 50178 INHCopyDocumentMgt
         end;
         //STOP  Axx°.7 ---------------------------------
         //START Axx°.2 ---------------------------------
-        if ToSalesLine.Artikeltyp = ToSalesLine.Artikeltyp::Setkomponente then begin
-            if ToSalesLine."Attached to Line No." = 0 then begin
-                Clear(ToSalesLine.Artikeltyp);
-            end;
-        end;
+        // if ToSalesLine.Artikeltyp = ToSalesLine.Artikeltyp::Setkomponente then begin
+        //     if ToSalesLine."Attached to Line No." = 0 then begin
+        //         Clear(ToSalesLine.Artikeltyp);
+        //     end;
+        // end;
         //STOP  Axx°.2 ---------------------------------
 
         //START B17° ---------------------------------
@@ -8511,8 +8457,8 @@ codeunit 50178 INHCopyDocumentMgt
 
     local procedure fnk_OnBeforeInsertArchSalesLine(var ToSalesHeader: Record "Sales Header"; var ToSalesLine: Record "Sales Line"; var FromArchSalesHeader: Record "Sales Header Archive"; var FromArchSalesLine: Record "Sales Line Archive"; var CopyThisLine: Boolean)
     var
-        lo_re_InitTable: Record "Init-Tabelle";
-        lo_cu_VariantMgt: Codeunit VariantMgt;
+        lo_re_InitTable: Record "INHInitTable";
+        lo_cu_VariantMgt: Codeunit INHVariantMgt;
     begin
         // !!! Achtung: bei Änderungen auch fnk_OnBeforeInsertSalesLine beachten   //Axx°
         //TODO evtl.: mit fnk_OnBeforeInsertSalesLine zusammenlegen ?
@@ -8523,18 +8469,18 @@ codeunit 50178 INHCopyDocumentMgt
         //STOP  Axx° ---------------------------------
 
         //START C11° ---------------------------------
-        if ToSalesLine."Webshop Discount" <> 0 then begin
+        if ToSalesLine.INHWebshopDiscount <> 0 then begin
             if not (ToSalesHeader."Document Type" in [ToSalesHeader."Document Type"::"Credit Memo",
                                                       ToSalesHeader."Document Type"::"Return Order"])
             then begin
-                ToSalesLine.Validate("Webshop Discount", 0);
+                ToSalesLine.Validate(INHWebshopDiscount, 0);
             end;
         end;
         //STOP  C11° ---------------------------------
 
         //START B44° ---------------------------------
         // Variante kopieren
-        ToSalesLine."Attached to - Type" := FromArchSalesLine."Attached to - Type";
+        ToSalesLine.INHAttachedToType := FromArchSalesLine.INHAttachedToType;
         if CopyThisLine then begin
             lo_cu_VariantMgt.fnk_RestoreSalesDLV(FromArchSalesLine, ToSalesLine);
         end;
@@ -8542,7 +8488,7 @@ codeunit 50178 INHCopyDocumentMgt
 
         //START Axx°.4 ---------------------------------
         if ToSalesLine."Document Type" = ToSalesLine."Document Type"::"Return Order" then begin
-            if (ToSalesLine.Type = ToSalesLine.Type::Item) and not FromArchSalesLine."Div. Artikel" then begin
+            if (ToSalesLine.Type = ToSalesLine.Type::Item) and not FromArchSalesLine.INHMiscItem then begin
                 lo_re_InitTable.Get(CompanyName);
                 ToSalesLine.Validate("Location Code", lo_re_InitTable.Init_Lagerortcode);
             end;
@@ -8564,7 +8510,7 @@ codeunit 50178 INHCopyDocumentMgt
 
         fnk_ClearSalesICFields(ToSalesLine);
 
-        cu_DialogMgt.fnk_UpdateNewPosition(Format(ToSalesLine.Type) + ' ' + ToSalesLine."No.", false);
+        cu_DialogMgt.UpdateNewPosition(Format(ToSalesLine.Type) + ' ' + ToSalesLine."No.", false);
     end;
 
     local procedure fnk_OnBeforeUpdateSalesLine(var ToSalesHeader: Record "Sales Header"; var ToSalesLine: Record "Sales Line"; var FromSalesHeader: Record "Sales Header"; var FromSalesLine: Record "Sales Line"; var CopyThisLine: Boolean) rv_bo_Exit: Boolean
@@ -8573,7 +8519,7 @@ codeunit 50178 INHCopyDocumentMgt
         lo_in_LineNo: Integer;
     begin
         //Axx°
-        fnk_ClearSalesICFields(ToSalesLine);
+        ClearSalesICFields(ToSalesLine);
         if (FromSalesLine.Type = FromSalesLine.Type::Item) and (FromSalesLine."No." = '') then begin
             lo_in_LineNo := ToSalesLine."Line No.";
             Clear(ToSalesLine);
@@ -8587,14 +8533,13 @@ codeunit 50178 INHCopyDocumentMgt
             ToSalesLine."Location Code" := FromSalesLine."Location Code";
         end;
 
-        if FromSalesLine."Div. Artikel" then begin
+        if FromSalesLine.INHMiscItem then
             ToSalesLine."No." := FromSalesLine."No.";
-        end;
 
-        ToSalesLine."Pos.Nummer" := FromSalesLine."Pos.Nummer";
-        ToSalesLine.Kurzbezeichnung := FromSalesLine.Kurzbezeichnung;
+        // ToSalesLine."Pos.Nummer" := FromSalesLine."Pos.Nummer";
+        // ToSalesLine.Kurzbezeichnung := FromSalesLine.Kurzbezeichnung;
 
-        ToSalesLine.Validate("Creation Datetime", CurrentDateTime);
+        // ToSalesLine.Validate("Creation Datetime", CurrentDateTime);
 
         if (FromSalesLine.Type = FromSalesLine.Type::Item) and (FromSalesLine."No." = '') then begin
             //START Axx°.7 ---------------------------------
@@ -8607,11 +8552,11 @@ codeunit 50178 INHCopyDocumentMgt
             end;
             //STOP  Axx°.7 ---------------------------------
             //START Axx°.2 ---------------------------------
-            if ToSalesLine.Artikeltyp = ToSalesLine.Artikeltyp::Setkomponente then begin
-                if ToSalesLine."Attached to Line No." = 0 then begin
-                    Clear(ToSalesLine.Artikeltyp);
-                end;
-            end;
+            // if ToSalesLine.Artikeltyp = ToSalesLine.Artikeltyp::Setkomponente then begin
+            //     if ToSalesLine."Attached to Line No." = 0 then begin
+            //         Clear(ToSalesLine.Artikeltyp);
+            //     end;
+            // end;
             //STOP  Axx°.2 ---------------------------------
             ToSalesLine.Insert;
             exit(true);
@@ -8630,25 +8575,19 @@ codeunit 50178 INHCopyDocumentMgt
 
     local procedure fnk_OnAfterUpdateSalesLine(var ToSalesHeader: Record "Sales Header"; var ToSalesLine: Record "Sales Line"; var FromSalesHeader: Record "Sales Header"; var FromSalesLine: Record "Sales Line"; var CopyThisLine: Boolean)
     var
-        lo_re_InitTable: Record "Init-Tabelle";
+        lo_re_InitTable: Record "INHInitTable";
         lo_re_Item: Record Item;
         lo_re_ToSalesLinePrev: Record "Sales Line";
         lo_re_VATPostingSetup: Record "VAT Posting Setup";
-        lo_cu_CalcMgt: Codeunit CalcMgt;
-        lo_cu_ItemMgt: Codeunit ItemMgt;
-        lo_cu_PreisfindungKundeArtikel: Codeunit "Preisfindung Kunde-Artikel";
-        lo_cu_SalesLineMgt: Codeunit SalesLineMgt;
+        lo_cu_CalcMgt: Codeunit INHCalcMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
+        // lo_cu_PreisfindungKundeArtikel: Codeunit "Preisfindung Kunde-Artikel";
+        // lo_cu_SalesLineMgt: Codeunit INHSalesLineMgt;
     begin
         // !!! Achtung: bei Änderungen auch fnk_OnAfterUpdateArchSalesLine beachten   //Axx°
-        ToSalesLine.IC_Typ := ToSalesHeader.IC_Typ;
-        ToSalesLine.IC_Mandant := ToSalesHeader.IC_Mandant;
         lo_re_InitTable.Get(CompanyName);
-        if (lo_re_InitTable.Firmennr = 1) or (ToSalesLine."Document Type" = ToSalesLine."Document Type"::"Return Order") then begin
-            Clear(ToSalesLine.IC_Typ);
-            Clear(ToSalesLine.IC_Mandant);
-        end;
 
-        if (RecalculateLines) and (not FromSalesLine."Div. Artikel") then begin
+        if (RecalculateLines) and (not FromSalesLine.INHMiscItem) then begin
             //Description wieder übernehmen, da Standard sie überschreibt
             if (FromSalesLine.Type = FromSalesLine.Type::" ") and (FromSalesLine."No." <> '') then begin
                 ToSalesLine.Validate(Description, FromSalesLine.Description);
@@ -8656,43 +8595,40 @@ codeunit 50178 INHCopyDocumentMgt
             end;
 
             //START A65° ---------------------------------
-            if (ToSalesHeader.Angebotsart = ToSalesHeader.Angebotsart::"GU-Angebot") and
-               (FromSalesHeader.Angebotsart = FromSalesHeader.Angebotsart::"GU-Vorlage")
-            then begin
-                if (ToSalesLine.Type <> ToSalesLine.Type::" ") and (ToSalesLine."No." <> '') then begin
-                    ToSalesLine.Positionsart := ToSalesLine.Positionsart::"aus Grundangebot";
-                end;
-            end;
+            if (ToSalesHeader.INHAngebotsart = ToSalesHeader.INHAngebotsart::"GU-Angebot") and
+               (FromSalesHeader.INHAngebotsart = FromSalesHeader.INHAngebotsart::"GU-Vorlage")
+            then
+                if (ToSalesLine.Type <> ToSalesLine.Type::" ") and (ToSalesLine."No." <> '') then
+                    ToSalesLine.INHPositiontype := ToSalesLine.INHPositiontype::"aus Grundangebot";
             //STOP  A65° ---------------------------------
 
-            ToSalesLine."Installation Group" := FromSalesLine."Installation Group";   //B74°
-            ToSalesLine."Shipment Date Group" := FromSalesLine."Shipment Date Group";   //B75°
-            ToSalesLine.Artikeltyp := FromSalesLine.Artikeltyp;
-            ToSalesLine."Pos." := FromSalesLine."Pos.";
-            if (FromSalesLine.Artikeltyp = FromSalesLine.Artikeltyp::Setkomponente) then begin
-                ToSalesLine.Artikeltyp := ToSalesLine.Artikeltyp::Setkomponente;
-                ToSalesLine.Validate("Unit Price", 0);
-                ToSalesLine.Validate(ToSalesLine."VK-Rabatt1", 0);
-                ToSalesLine.Validate(ToSalesLine."VK-Rabatt2", 0);
-                ToSalesLine.Validate(ToSalesLine."VK-Rabatt3", 0);
-            end;
-            if ((ToSalesLine.Type = ToSalesLine.Type::Item) and (ToSalesLine."No." <> '')) then begin
-                ToSalesLine.Validate("Special Posting Group Mode", FromSalesLine."Special Posting Group Mode");   //B85°
-                if ((ToSalesHeader."Kopfrabatt H" <> '') or (ToSalesHeader."Kopfrabatt I" <> '') or (ToSalesHeader."Kopfrabatt E" <> ''))
-                  and (ToSalesLine.Type = ToSalesLine.Type::Item) and (ToSalesLine."No." <> '') then
-                    if (ToSalesLine."Preis-KZ" <> ToSalesLine."Preis-KZ"::Netto) then
-                        ToSalesLine.Validate("VK-Rabatt3", lo_cu_PreisfindungKundeArtikel.FNK_GetRightKopfrabatt(ToSalesHeader, ToSalesLine))
-                    else
-                        ToSalesLine.Validate("VK-Rabatt3", 0);
-                if Item.Get(FromSalesLine."No.") and (Item.Kurzbezeichnung <> '') then
-                    ToSalesLine.Kurzbezeichnung := Item.Kurzbezeichnung
-                else
-                    ToSalesLine.Kurzbezeichnung := FromSalesLine.Kurzbezeichnung;
-            end;
+            // ToSalesLine."Installation Group" := FromSalesLine."Installation Group";   //B74°
+            // ToSalesLine."Shipment Date Group" := FromSalesLine."Shipment Date Group";   //B75°
+            // ToSalesLine.Artikeltyp := FromSalesLine.Artikeltyp;
+            // ToSalesLine."Pos." := FromSalesLine."Pos.";
+            // if (FromSalesLine.Artikeltyp = FromSalesLine.Artikeltyp::Setkomponente) then begin
+            //     ToSalesLine.Artikeltyp := ToSalesLine.Artikeltyp::Setkomponente;
+            //     ToSalesLine.Validate("Unit Price", 0);
+            //     ToSalesLine.Validate(ToSalesLine.INHSalesDiscount1, 0);
+            //     ToSalesLine.Validate(ToSalesLine.INHSalesDiscount2, 0);
+            //     ToSalesLine.Validate(ToSalesLine.INHSalesDiscount3, 0);
+            // end;
+            // if ((ToSalesLine.Type = ToSalesLine.Type::Item) and (ToSalesLine."No." <> '')) then begin
+            //     ToSalesLine.Validate("Special Posting Group Mode", FromSalesLine."Special Posting Group Mode");   //B85°
+            //     if ((ToSalesHeader."Kopfrabatt H" <> '') or (ToSalesHeader."Kopfrabatt I" <> '') or (ToSalesHeader."Kopfrabatt E" <> ''))
+            //       and (ToSalesLine.Type = ToSalesLine.Type::Item) and (ToSalesLine."No." <> '') then
+            //         if (ToSalesLine."Preis-KZ" <> ToSalesLine."Preis-KZ"::Netto) then
+            //             ToSalesLine.Validate(INHSalesDiscount3, lo_cu_PreisfindungKundeArtikel.FNK_GetRightKopfrabatt(ToSalesHeader, ToSalesLine))
+            //         else
+            //             ToSalesLine.Validate(INHSalesDiscount3, 0);
+            //     if Item.Get(FromSalesLine."No.") and (Item.Kurzbezeichnung <> '') then
+            //         ToSalesLine.Kurzbezeichnung := Item.Kurzbezeichnung
+            //     else
+            //         ToSalesLine.Kurzbezeichnung := FromSalesLine.Kurzbezeichnung;
+            // end;
 
-            fnk_ClearSalesICFields(ToSalesLine);
-            Clear(ToSalesLine."Ladelistenr.");
-
+            // fnk_ClearSalesICFields(ToSalesLine);
+            // Clear(ToSalesLine."Ladelistenr.");
         end else begin
 
             //START Axx° ---------------------------------
@@ -8705,29 +8641,22 @@ codeunit 50178 INHCopyDocumentMgt
             //STOP  Axx° ---------------------------------
 
             //START Axx°.9 ---------------------------------
-            if ToSalesHeader."Job No." <> '' then begin
-                ToSalesLine."Job No." := ToSalesHeader."Job No.";
-                ToSalesLine."Job Task No." := ToSalesHeader."Job Task No.";
+            if ToSalesHeader."INHJob No." <> '' then begin
+                ToSalesLine."Job No." := ToSalesHeader."INHJob No.";
+                ToSalesLine."Job Task No." := ToSalesHeader."INHJob Task No.";
             end;
             //STOP  Axx°.9 ---------------------------------
 
-            Clear(ToSalesLine."EK Bestellnr");
-            Clear(ToSalesLine."EK Posnr");
-            Clear(ToSalesLine.Auftragsnummer);
-            Clear(ToSalesLine."Auftragszeilennr.");
-            Clear(ToSalesLine.Angebotsnummer);
-            Clear(ToSalesLine."Angebotszeilennr.");
+            // Clear(ToSalesLine."EK Bestellnr");
+            // Clear(ToSalesLine."EK Posnr");
+            // Clear(ToSalesLine.Auftragsnummer);
+            // Clear(ToSalesLine."Auftragszeilennr.");
+            // Clear(ToSalesLine.Angebotsnummer);
+            // Clear(ToSalesLine."Angebotszeilennr.");
             //CLEAR(ToSalesLine.Nettoprojekt);   //C73°
 
-            ToSalesLine.IC_Typ := ToSalesHeader.IC_Typ;
-            ToSalesLine.IC_Mandant := ToSalesHeader.IC_Mandant;
-            if lo_re_InitTable.Firmennr = 1 then begin
-                Clear(ToSalesLine.IC_Typ);
-                Clear(ToSalesLine.IC_Mandant);
-            end;
-
             fnk_ClearSalesICFields(ToSalesLine);
-            Clear(ToSalesLine."Ladelistenr.");
+            // Clear(ToSalesLine."INHLadelistenr.");
 
             ToSalesLine."Sell-to Customer No." := ToSalesHeader."Sell-to Customer No.";
             ToSalesLine."Bill-to Customer No." := ToSalesHeader."Bill-to Customer No.";
@@ -8737,7 +8666,7 @@ codeunit 50178 INHCopyDocumentMgt
             if (ToSalesLine."Document Type" = ToSalesLine."Document Type"::"Return Order") then
                 ToSalesLine."Location Code" := '';
 
-            if FromSalesLine."Div. Artikel" and (FromSalesLine."No." <> '') then begin
+            if FromSalesLine.INHMiscItem and (FromSalesLine."No." <> '') then begin
                 lo_re_ToSalesLinePrev := ToSalesLine;   //A97°.1
                 ToSalesLine.Validate(Type, FromSalesLine.Type);
                 ToSalesLine.Validate("No.", FromSalesLine."No.");
@@ -8750,10 +8679,10 @@ codeunit 50178 INHCopyDocumentMgt
                 //STOP  Axx°.11 ---------------------------------
                 ToSalesLine.Validate("Unit Price", FromSalesLine."Unit Price");
                 ToSalesLine.Validate("Unit Cost (LCY)", FromSalesLine."Unit Cost (LCY)");
-                ToSalesLine.Kurzbezeichnung := FromSalesLine.Kurzbezeichnung;
-                ToSalesLine."Pos." := FromSalesLine."Pos.";
-                ToSalesLine.Validate("Preis-KZ", FromSalesLine."Preis-KZ");
-                ToSalesLine.Validate(Preisherkunft, FromSalesLine.Preisherkunft);
+                // ToSalesLine.Kurzbezeichnung := FromSalesLine.Kurzbezeichnung;
+                // ToSalesLine."Pos." := FromSalesLine."Pos.";
+                // ToSalesLine.Validate("Preis-KZ", FromSalesLine."Preis-KZ");
+                // ToSalesLine.Validate(Preisherkunft, FromSalesLine.Preisherkunft);
                 //START A97°.1 ---------------------------------
                 if (ToSalesLine."Gen. Bus. Posting Group" <> lo_re_ToSalesLinePrev."Gen. Bus. Posting Group") or
                    (ToSalesLine."Gen. Prod. Posting Group" <> lo_re_ToSalesLinePrev."Gen. Prod. Posting Group") or
@@ -8768,134 +8697,108 @@ codeunit 50178 INHCopyDocumentMgt
                     end;
                     //START C92° ---------------------------------
                     if lo_re_VATPostingSetup.Get(lo_re_ToSalesLinePrev."VAT Bus. Posting Group", lo_re_ToSalesLinePrev."VAT Prod. Posting Group") then;
-                    if (lo_re_VATPostingSetup."OPP Valid Until" = 0D) or (lo_re_VATPostingSetup."OPP Valid Until" > WorkDate) then begin
-                        //STOP  C92° ---------------------------------
-                        if lo_re_ToSalesLinePrev."VAT Bus. Posting Group" <> '' then begin
-                            ToSalesLine."VAT Bus. Posting Group" := lo_re_ToSalesLinePrev."VAT Bus. Posting Group";
-                        end;
-                        if lo_re_ToSalesLinePrev."VAT Prod. Posting Group" <> '' then begin
-                            ToSalesLine."VAT Prod. Posting Group" := lo_re_ToSalesLinePrev."VAT Prod. Posting Group";
-                        end;
-                    end;   //C92°
                     ToSalesLine.Validate("Gen. Bus. Posting Group");
                     ToSalesLine.Validate("Gen. Prod. Posting Group");
                     ToSalesLine.Validate("VAT Bus. Posting Group");
                     ToSalesLine.Validate("VAT Prod. Posting Group");
                 end;
                 //STOP  A97°.1 ---------------------------------
-                ToSalesLine.Validate("Special Posting Group Mode", FromSalesLine."Special Posting Group Mode");   //B85°
+                // ToSalesLine.Validate(INHSpecialPostingGroupMode, FromSalesLine.INHSpecialPostingGroupMode);   //B85°
                 ToSalesLine.Description := FromSalesLine.Description;
                 ToSalesLine."Description 2" := FromSalesLine."Description 2";
-                ToSalesLine."Vendor Item No." := FromSalesLine."Vendor Item No.";   //C47°
+                // ToSalesLine."Vendor Item No." := FromSalesLine."Vendor Item No.";   //C47°
                                                                                     //START C01° ---------------------------------
-                ToSalesLine."Unit Cost Sales 1" := FromSalesLine."Unit Cost Sales 1";
-                ToSalesLine."Unit Cost Sales 2" := FromSalesLine."Unit Cost Sales 2";
-                ToSalesLine."Unit Cost Sales 3" := FromSalesLine."Unit Cost Sales 3";
+                // ToSalesLine."Unit Cost Sales 1" := FromSalesLine."Unit Cost Sales 1";
+                // ToSalesLine."Unit Cost Sales 2" := FromSalesLine."Unit Cost Sales 2";
+                // ToSalesLine."Unit Cost Sales 3" := FromSalesLine."Unit Cost Sales 3";
                 //STOP  C01° ---------------------------------
                 //START B99° ---------------------------------
-                if DT2Date(FromSalesLine."Last Modified") >= CalcDate('<-6M>', WorkDate) then begin
-                    ToSalesLine."Net Weight" := FromSalesLine."Net Weight";
-                    ToSalesLine."Country/Region of Origin Code" := FromSalesLine."Country/Region of Origin Code";
-                    ToSalesLine."ZT Ausfuhr" := FromSalesLine."ZT Ausfuhr";
-                    ToSalesLine."ZT Einfuhr" := FromSalesLine."ZT Einfuhr";
-                    ToSalesLine."Customs Specific. Confirmed" := FromSalesLine."Customs Specific. Confirmed";
-                end;
+                // if DT2Date(FromSalesLine."Last Modified") >= CalcDate('<-6M>', WorkDate) then begin
+                //     ToSalesLine."Net Weight" := FromSalesLine."Net Weight";
+                //     ToSalesLine."Country/Region of Origin Code" := FromSalesLine."Country/Region of Origin Code";
+                //     ToSalesLine."ZT Ausfuhr" := FromSalesLine."ZT Ausfuhr";
+                //     ToSalesLine."ZT Einfuhr" := FromSalesLine."ZT Einfuhr";
+                //     ToSalesLine."Customs Specific. Confirmed" := FromSalesLine."Customs Specific. Confirmed";
+                // end;
                 //STOP  B99° ---------------------------------
             end;
 
             //START C92° ---------------------------------
             if FromSalesLine.Type = FromSalesLine.Type::Item then begin
                 if lo_re_VATPostingSetup.Get(ToSalesLine."VAT Bus. Posting Group", ToSalesLine."VAT Prod. Posting Group") then;
-                if (lo_re_VATPostingSetup."OPP Valid Until" <> 0D) and (lo_re_VATPostingSetup."OPP Valid Until" <= WorkDate) then begin
-                    if lo_re_Item.Get(FromSalesLine."No.") then begin
-                        ToSalesLine."VAT Bus. Posting Group" := ToSalesHeader."VAT Bus. Posting Group";
-                        ToSalesLine."VAT Prod. Posting Group" := lo_re_Item."VAT Prod. Posting Group";
-                        ToSalesLine.Validate("VAT Bus. Posting Group");
-                        ToSalesLine.Validate("VAT Prod. Posting Group");
-                    end;
-                end;
             end;
             //STOP  C92° ---------------------------------
 
-            ToSalesLine."Div. Artikel" := FromSalesLine."Div. Artikel";
-            ToSalesLine.Artikeltyp := FromSalesLine.Artikeltyp;
-            ToSalesLine."Pos.Nummer" := FromSalesLine."Pos.Nummer";
+            // ToSalesLine.INHMiscItem := FromSalesLine.INHMiscItem;
+            // ToSalesLine.Artikeltyp := FromSalesLine.Artikeltyp;
+            // ToSalesLine."Pos.Nummer" := FromSalesLine."Pos.Nummer";
 
-            if (FromSalesLine.Type = FromSalesLine.Type::Item) and (FromSalesLine."No." <> '') then begin
-                lo_cu_CalcMgt.FNK_KalkulationVonVKBelegZuVKB(FromSalesLine, ToSalesLine);
-                lo_cu_CalcMgt.FNK_KalkulaRabatteZuVKZeileAkt(ToSalesLine);
-            end;
+            // if (FromSalesLine.Type = FromSalesLine.Type::Item) and (FromSalesLine."No." <> '') then begin
+            //     lo_cu_CalcMgt.FNK_KalkulationVonVKBelegZuVKB(FromSalesLine, ToSalesLine);
+            //     lo_cu_CalcMgt.FNK_KalkulaRabatteZuVKZeileAkt(ToSalesLine);
+            // end;
 
-            if not RecalculateLines and (FromSalesLine.Type = FromSalesLine.Type::Item) and (FromSalesLine."No." <> '') then begin
-                ToSalesLine.Validate("VK-Rabatt1", FromSalesLine."VK-Rabatt1");
-                ToSalesLine.Validate("VK-Rabatt2", FromSalesLine."VK-Rabatt2");
-                ToSalesLine.Validate("VK-Rabatt3", FromSalesLine."VK-Rabatt3");
-                ToSalesLine."Preis-KZ" := FromSalesLine."Preis-KZ";
-                ToSalesLine.Preisherkunft := FromSalesLine.Preisherkunft;
-                //START Axx°.13 ---------------------------------
-                if lo_re_Item.Get(FromSalesLine."No.") then begin
-                    ToSalesLine.Artikelart := lo_re_Item."Item Type";
-                end;
-                //STOP  Axx°.13 ---------------------------------
-                ToSalesLine."Assortment Classification" := lo_cu_ItemMgt.fnk_GetAssortmentClassification3(ToSalesLine."No.");   //C61°
-            end;
+            // if not RecalculateLines and (FromSalesLine.Type = FromSalesLine.Type::Item) and (FromSalesLine."No." <> '') then begin
+            //     ToSalesLine.Validate(INHSalesDiscount1, FromSalesLine.INHSalesDiscount1);
+            //     ToSalesLine.Validate(INHSalesDiscount2, FromSalesLine.INHSalesDiscount2);
+            //     ToSalesLine.Validate(INHSalesDiscount3, FromSalesLine.INHSalesDiscount3);
+            //     ToSalesLine."Preis-KZ" := FromSalesLine."Preis-KZ";
+            //     ToSalesLine.Preisherkunft := FromSalesLine.Preisherkunft;
+            //     //START Axx°.13 ---------------------------------
+            //     if lo_re_Item.Get(FromSalesLine."No.") then begin
+            //         ToSalesLine.Artikelart := lo_re_Item."Item Type";
+            //     end;
+            //     //STOP  Axx°.13 ---------------------------------
+            //     ToSalesLine."Assortment Classification" := lo_cu_ItemMgt.fnk_GetAssortmentClassification3(ToSalesLine."No.");   //C61°
+            // end;
 
             //START A65° ---------------------------------
-            if (ToSalesHeader.Angebotsart = ToSalesHeader.Angebotsart::"GU-Angebot") and
-               (FromSalesHeader.Angebotsart = FromSalesHeader.Angebotsart::"GU-Vorlage")
-            then begin
-                if (ToSalesLine.Type <> ToSalesLine.Type::" ") and (ToSalesLine."No." <> '') then begin
-                    ToSalesLine.Positionsart := ToSalesLine.Positionsart::"aus Grundangebot";
-                end;
-            end;
+            // if (ToSalesHeader.Angebotsart = ToSalesHeader.Angebotsart::"GU-Angebot") and
+            //    (FromSalesHeader.Angebotsart = FromSalesHeader.Angebotsart::"GU-Vorlage")
+            // then begin
+            //     if (ToSalesLine.Type <> ToSalesLine.Type::" ") and (ToSalesLine."No." <> '') then begin
+            //         ToSalesLine.Positionsart := ToSalesLine.Positionsart::"aus Grundangebot";
+            //     end;
+            // end;
 
-            if ToSalesLine.Positionsart = ToSalesLine.Positionsart::"gelöscht mit Aufpreisposition" then begin
-                ToSalesLine."Special Order Purch. Line No." := ToSalesLine."Line No." + 10000;
-                ToSalesLine."Line Amount" := FromSalesLine."Line Amount";
-                bo_AufpreisLineNo := true;
-            end else
-                if (ToSalesLine.Positionsart = ToSalesLine.Positionsart::Aufpreisposition) and (not bo_AufpreisLineNo) then begin
-                    ToSalesLine."Special Order Purch. Line No." := ToSalesLine."Line No.";
-                    bo_AufpreisLineNo := false;
-                end else begin
-                    ToSalesLine."Special Order Purch. Line No." := 0;
-                    bo_AufpreisLineNo := false;
-                end;
+            // if ToSalesLine.Positionsart = ToSalesLine.Positionsart::"gelöscht mit Aufpreisposition" then begin
+            //     ToSalesLine."Special Order Purch. Line No." := ToSalesLine."Line No." + 10000;
+            //     ToSalesLine."Line Amount" := FromSalesLine."Line Amount";
+            //     bo_AufpreisLineNo := true;
+            // end else
+            //     if (ToSalesLine.Positionsart = ToSalesLine.Positionsart::Aufpreisposition) and (not bo_AufpreisLineNo) then begin
+            //         ToSalesLine."Special Order Purch. Line No." := ToSalesLine."Line No.";
+            //         bo_AufpreisLineNo := false;
+            //     end else begin
+            //         ToSalesLine."Special Order Purch. Line No." := 0;
+            //         bo_AufpreisLineNo := false;
+            //     end;
             //STOP A65° ---------------------------------
 
             //START Axx°.14 ---------------------------------
-            if GuiAllowed and (ToSalesLine."Document Type" = ToSalesLine."Document Type"::"Return Order") then begin
-                if (not FromSalesLine."Div. Artikel") and (ToSalesLine.Type = ToSalesLine.Type::Item) and (ToSalesLine.Quantity > 1)
-                then begin
-                    lo_cu_SalesLineMgt.fnk_CheckReturnQuantity(ToSalesLine);
-                end;
-            end;
+            // if GuiAllowed and (ToSalesLine."Document Type" = ToSalesLine."Document Type"::"Return Order") then begin
+            //     if (not FromSalesLine.INHMiscItem) and (ToSalesLine.Type = ToSalesLine.Type::Item) and (ToSalesLine.Quantity > 1)
+            //     then begin
+            //         lo_cu_SalesLineMgt.fnk_CheckReturnQuantity(ToSalesLine);
+            //     end;
+            // end;
             //STOP  Axx°.14 ---------------------------------
-
         end;
     end;
 
     local procedure fnk_OnAfterUpdateArchSalesLine(var ToSalesHeader: Record "Sales Header"; var ToSalesLine: Record "Sales Line"; var FromArchSalesHeader: Record "Sales Header Archive"; var FromArchSalesLine: Record "Sales Line Archive"; var CopyThisLine: Boolean)
     var
-        lo_re_InitTable: Record "Init-Tabelle";
+        lo_re_InitTable: Record "INHInitTable";
         lo_re_Item: Record Item;
         lo_re_ToSalesLinePrev: Record "Sales Line";
         lo_re_VATPostingSetup: Record "VAT Posting Setup";
-        lo_cu_CalcMgt: Codeunit CalcMgt;
-        lo_cu_ItemMgt: Codeunit ItemMgt;
+        lo_cu_CalcMgt: Codeunit INHCalcMgt;
+        lo_cu_ItemMgt: Codeunit INHItemMgt;
         lo_cu_PreisfindungKundeArtikel: Codeunit "Preisfindung Kunde-Artikel";
     begin
         // !!! Achtung: bei Änderungen auch fnk_OnAfterUpdateSalesLine beachten   //Axx°
         //TODO evtl: mit fnk_OnAfterUpdateSalesLine zusammenlegen ?
-        ToSalesLine.IC_Typ := ToSalesHeader.IC_Typ;
-        ToSalesLine.IC_Mandant := ToSalesHeader.IC_Mandant;
-        lo_re_InitTable.Get(CompanyName);
-        if (lo_re_InitTable.Firmennr = 1) or (ToSalesLine."Document Type" = ToSalesLine."Document Type"::"Return Order") then begin
-            Clear(ToSalesLine.IC_Typ);
-            Clear(ToSalesLine.IC_Mandant);
-        end;
-
-        if (RecalculateLines) and (not FromArchSalesLine."Div. Artikel") then begin
+        if (RecalculateLines) and (not FromArchSalesLine.INHMiscItem) then begin
             //Description wieder übernehmen, da Standard sie überschreibt
             if (FromArchSalesLine.Type = FromArchSalesLine.Type::" ") and (FromArchSalesLine."No." <> '') then begin
                 ToSalesLine.Validate(Description, FromArchSalesLine.Description);
@@ -8903,8 +8806,8 @@ codeunit 50178 INHCopyDocumentMgt
             end;
 
             //START A65° ---------------------------------
-            if (ToSalesHeader.Angebotsart = ToSalesHeader.Angebotsart::"GU-Angebot") and
-               (FromArchSalesHeader.Angebotsart = FromArchSalesHeader.Angebotsart::"GU-Vorlage")
+            if (ToSalesHeader.INHAngebotsart = ToSalesHeader.INHAngebotsart::"GU-Angebot") and
+               (FromArchSalesHeader.INHAngebotsart = FromArchSalesHeader.INHAngebotsart::"GU-Vorlage")
             then begin
                 if (ToSalesLine.Type <> ToSalesLine.Type::" ") and (ToSalesLine."No." <> '') then begin
                     ToSalesLine.Positionsart := ToSalesLine.Positionsart::"aus Grundangebot";
@@ -8919,9 +8822,9 @@ codeunit 50178 INHCopyDocumentMgt
             if (FromArchSalesLine.Artikeltyp = FromArchSalesLine.Artikeltyp::Setkomponente) then begin
                 ToSalesLine.Artikeltyp := ToSalesLine.Artikeltyp::Setkomponente;
                 ToSalesLine.Validate("Unit Price", 0);
-                ToSalesLine.Validate(ToSalesLine."VK-Rabatt1", 0);
-                ToSalesLine.Validate(ToSalesLine."VK-Rabatt2", 0);
-                ToSalesLine.Validate(ToSalesLine."VK-Rabatt3", 0);
+                ToSalesLine.Validate(ToSalesLine.INHSalesDiscount1, 0);
+                ToSalesLine.Validate(ToSalesLine.INHSalesDiscount2, 0);
+                ToSalesLine.Validate(ToSalesLine.INHSalesDiscount3, 0);
             end;
             if ((ToSalesLine.Type = ToSalesLine.Type::Item) and (ToSalesLine."No." <> '')) then begin
                 ToSalesLine.Validate("Special Posting Group Mode", FromArchSalesLine."Special Posting Group Mode");   //B85°
@@ -8969,7 +8872,7 @@ codeunit 50178 INHCopyDocumentMgt
             if (ToSalesLine."Document Type" = ToSalesLine."Document Type"::"Return Order") then
                 ToSalesLine."Location Code" := '';
 
-            if FromArchSalesLine."Div. Artikel" and (FromArchSalesLine."No." <> '') then begin
+            if FromArchSalesLine.INHMiscItem and (FromArchSalesLine."No." <> '') then begin
                 lo_re_ToSalesLinePrev := ToSalesLine;   //A97°.1
                 ToSalesLine.Validate(Type, FromArchSalesLine.Type);
                 ToSalesLine.Validate("No.", FromArchSalesLine."No.");
@@ -9030,7 +8933,7 @@ codeunit 50178 INHCopyDocumentMgt
             end;
             //STOP  C92° ---------------------------------
 
-            ToSalesLine."Div. Artikel" := FromArchSalesLine."Div. Artikel";
+            ToSalesLine.INHMiscItem := FromArchSalesLine.INHMiscItem;
             ToSalesLine.Artikeltyp := FromArchSalesLine.Artikeltyp;
             ToSalesLine."Pos.Nummer" := FromArchSalesLine."Pos.Nummer";
 
@@ -9041,9 +8944,9 @@ codeunit 50178 INHCopyDocumentMgt
             end;
 
             if not RecalculateLines and (FromArchSalesLine.Type = FromArchSalesLine.Type::Item) and (FromArchSalesLine."No." <> '') then begin
-                ToSalesLine.Validate("VK-Rabatt1", FromArchSalesLine."VK-Rabatt1");
-                ToSalesLine.Validate("VK-Rabatt2", FromArchSalesLine."VK-Rabatt2");
-                ToSalesLine.Validate("VK-Rabatt3", FromArchSalesLine."VK-Rabatt3");
+                ToSalesLine.Validate(INHSalesDiscount1, FromArchSalesLine.INHSalesDiscount1);
+                ToSalesLine.Validate(INHSalesDiscount2, FromArchSalesLine.INHSalesDiscount2);
+                ToSalesLine.Validate(INHSalesDiscount3, FromArchSalesLine.INHSalesDiscount3);
                 ToSalesLine."Preis-KZ" := FromArchSalesLine."Preis-KZ";
                 ToSalesLine.Preisherkunft := FromArchSalesLine.Preisherkunft;
                 //START Axx°.13 ---------------------------------

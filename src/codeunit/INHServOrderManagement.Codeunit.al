@@ -115,12 +115,12 @@ codeunit 50141 INHServOrderManagement
             Cust.SetRange(Address, Address);
             Cust.SetRange(City, City);
             if Cust.FindFirst then
-                if not ConfirmManagement.ConfirmProcess(
+                if not ConfirmManagement.GetResponse
                      StrSubstNo(NewCustomerQst, Cust.TableCaption), false)
                 then begin
-                    Validate("Customer No.", Cust."No.");
-                    exit;
-                end;
+                Validate("Customer No.", Cust."No.");
+                exit;
+            end;
             CustTempl.Reset;
             if not CustTempl.FindFirst then
                 Error(Text004);

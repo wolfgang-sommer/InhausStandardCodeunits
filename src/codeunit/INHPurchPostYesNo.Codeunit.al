@@ -17,7 +17,7 @@ codeunit 50128 INHPurchPostYesNo
     var
         PurchaseHeader: Record "Purchase Header";
     begin
-        if not Find then
+        if not Rec.Find then
             Error(NothingToPostErr);
 
         PurchaseHeader.Copy(Rec);
@@ -67,7 +67,6 @@ codeunit 50128 INHPurchPostYesNo
     var
         ConfirmManagement: Codeunit "Confirm Management";
         Selection: Integer;
-        "+++TE_INHAUS+++": ;
         TextSelectionJustShip: Label '&Liefern';
     begin
         if DefaultOption > 3 then
@@ -105,7 +104,7 @@ codeunit 50128 INHPurchPostYesNo
                         if Status <> Status::Released then
                             Error('Bitte die Rechnung zuerst freigeben!');
                     //STOP  Axx° ---------------------------------
-                    if not ConfirmManagement.ConfirmProcess(
+                    if not ConfirmManagement.GetResponse(
                          StrSubstNo(PostConfirmQst, Format("Document Type")), true)
                     then
                         exit(false);
